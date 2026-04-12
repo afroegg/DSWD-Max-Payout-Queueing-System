@@ -388,3 +388,17 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.table-remove-btn {
+    background: #b91c1c;
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-remove-btn:hover {
+    background: #991b1b;
+}
