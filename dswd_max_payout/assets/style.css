@@ -145,9 +145,21 @@ body {
 
 /* ===== ACTIONS ===== */
 .actions {
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
     margin: 18px 0;
+    align-items: start;
+}
+
+.actions .btn:first-child {
+    grid-column: 1;
+    justify-self: start;
+}
+
+.actions .btn:last-child {
+    grid-column: 2;
+    justify-self: start;
 }
 
 /* ===== PANELS ===== */
