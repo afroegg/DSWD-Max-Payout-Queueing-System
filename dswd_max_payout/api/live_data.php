@@ -24,7 +24,21 @@ $released = $conn->query("
     WHERE payout_date = '$today' AND status = 'released'
 ")->fetch_assoc()['total'];
 
-/* QUEUE MONITORING: ONLY WAITING + SERVING */
+/* CURRENT SERVING QUEUE NUMBER */
+$currentServing = null;
+$servingQuery = $conn->query("
+    SELECT q.queue_number
+    FROM queue_entries q
+    WHERE q.transaction_date = '$today' AND q.status = 'serving'
+    ORDER BY q.id ASC
+    LIMIT 1
+");
+
+if ($servingQuery && $servingQuery->num_rows > 0) {
+    $currentServing = $servingQuery->fetch_assoc()['queue_number'];
+}
+
+/* QUEUE MONITORING: WAITING ONLY */
 $queue = [];
 $q = $conn->query("
     SELECT
@@ -37,7 +51,7 @@ $q = $conn->query("
     FROM queue_entries q
     JOIN beneficiaries b ON q.beneficiary_id = b.id
     WHERE q.transaction_date = '$today'
-      AND q.status IN ('waiting', 'serving')
+      AND q.status = 'waiting'
     ORDER BY q.id ASC
 ");
 
@@ -45,7 +59,7 @@ while ($row = $q->fetch_assoc()) {
     $queue[] = $row;
 }
 
-/* PAYOUT HISTORY: RELEASED ONLY */
+/* PAYOUT HISTORY */
 $history = [];
 $h = $conn->query("
     SELECT
@@ -70,6 +84,7 @@ echo json_encode([
     "waiting" => (int)$waiting,
     "serving" => (int)$serving,
     "released" => (int)$released,
+    "currentServing" => $currentServing,
     "queue" => $queue,
     "history" => $history
 ]);
