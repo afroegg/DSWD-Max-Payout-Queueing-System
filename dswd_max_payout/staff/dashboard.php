@@ -14,7 +14,6 @@ include('../auth/check.php');
 
 <div class="app">
 
-<!-- MAIN -->
 <main class="main">
 
 <header class="header">
@@ -23,7 +22,6 @@ include('../auth/check.php');
 
 <section class="content">
 
-<!-- INDICATORS -->
 <div class="stats big">
     <div class="stat">
         <span>WAITING</span>
@@ -41,7 +39,6 @@ include('../auth/check.php');
     </div>
 </div>
 
-<!-- ACTION BUTTONS -->
 <div class="actions big">
     <a href="serve_next.php" class="btn primary">
         <span class="material-icons">campaign</span>
@@ -54,10 +51,8 @@ include('../auth/check.php');
     </a>
 </div>
 
-<!-- PANELS -->
 <div class="dashboard-panels big">
 
-<!-- QUEUE -->
 <section class="panel">
     <div class="panel-header">
         <h3>Queue Monitoring</h3>
@@ -71,6 +66,7 @@ include('../auth/check.php');
                     <th>Name</th>
                     <th>Program</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
 
@@ -79,7 +75,6 @@ include('../auth/check.php');
     </div>
 </section>
 
-<!-- HISTORY -->
 <section class="panel">
     <div class="panel-header">
         <h3>Payout Transactions</h3>
@@ -106,58 +101,45 @@ include('../auth/check.php');
 </section>
 </main>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-    <div class="logo">ADMIN</div>
-
-    <nav>
-        <a href="dashboard.php" class="active">
-            <span class="material-icons">dashboard</span> Dashboard
-        </a>
-
-        <a href="register_walkin.php">
-            <span class="material-icons">person_add</span> Register
-        </a>
-    </nav>
-
-    <div class="sidebar-footer">
-        <a href="../auth/logout.php">
-            <span class="material-icons">logout</span> Logout
-        </a>
-    </div>
-</aside>
+<?php include('sidebar.php'); ?>
 
 </div>
 
-<!-- AJAX LIVE SCRIPT -->
 <script>
 async function loadLiveData() {
     try {
         const res = await fetch("../api/live_data.php");
         const data = await res.json();
 
-        // COUNTS
         document.getElementById("waitingCount").innerText = data.waiting;
         document.getElementById("servingCount").innerText = data.serving;
         document.getElementById("releasedCount").innerText = data.released;
 
-        // QUEUE
         let queueHTML = "";
         data.queue.forEach(row => {
+            let actionHtml = "-";
+
+            if (row.status === "waiting") {
+                actionHtml = `
+                    <form method="POST" action="../api/remove_queue.php" onsubmit="return confirm('Remove this queue entry?');" style="margin:0;">
+                        <input type="hidden" name="queue_id" value="${row.id}">
+                        <button type="submit" class="table-remove-btn">Remove</button>
+                    </form>
+                `;
+            }
+
             queueHTML += `
                 <tr class="${row.status === 'serving' ? 'row-serving' : ''}">
                     <td>${row.queue_number}</td>
                     <td>${row.first_name} ${row.last_name}</td>
                     <td>${row.program_type}</td>
-                    <td class="status ${row.status}">
-                        ${row.status.toUpperCase()}
-                    </td>
+                    <td class="status ${row.status}">${row.status.toUpperCase()}</td>
+                    <td>${actionHtml}</td>
                 </tr>
             `;
         });
         document.getElementById("queueTable").innerHTML = queueHTML;
 
-        // HISTORY
         let historyHTML = "";
         data.history.forEach(row => {
             historyHTML += `
@@ -176,18 +158,14 @@ async function loadLiveData() {
     }
 }
 
-// RUN EVERY 3 SECONDS
 setInterval(loadLiveData, 3000);
-
-// INITIAL LOAD
 loadLiveData();
 
-
-history.pushState(null, null, location.href);
-window.onpopstate = function () {
-    history.go(1);
-};
-
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+        window.location.reload();
+    }
+});
 </script>
 
 </body>
