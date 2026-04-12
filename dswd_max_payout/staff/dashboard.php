@@ -138,6 +138,15 @@ async function loadLiveData() {
                 </tr>
             `;
         });
+
+        if (!data.queue.length) {
+            queueHTML = `
+                <tr>
+                    <td colspan="5" class="empty-state">No waiting or serving queues.</td>
+                </tr>
+            `;
+        }
+
         document.getElementById("queueTable").innerHTML = queueHTML;
 
         let historyHTML = "";
@@ -151,6 +160,15 @@ async function loadLiveData() {
                 </tr>
             `;
         });
+
+        if (!data.history.length) {
+            historyHTML = `
+                <tr>
+                    <td colspan="4" class="empty-state">No payout transactions yet.</td>
+                </tr>
+            `;
+        }
+
         document.getElementById("historyTable").innerHTML = historyHTML;
 
     } catch (err) {
@@ -162,7 +180,8 @@ setInterval(loadLiveData, 3000);
 loadLiveData();
 
 window.addEventListener("pageshow", function (event) {
-    if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+    const nav = performance.getEntriesByType("navigation");
+    if (event.persisted || (nav.length && nav[0].type === "back_forward")) {
         window.location.reload();
     }
 });
