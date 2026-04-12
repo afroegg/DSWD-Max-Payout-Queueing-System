@@ -18,14 +18,13 @@ $serving = $conn->query("
     WHERE transaction_date = '$today' AND status = 'serving'
 ")->fetch_assoc()['total'];
 
-/* RELEASED COUNT NOW COMES FROM PAYOUTS */
 $released = $conn->query("
     SELECT COUNT(*) AS total
     FROM payouts
     WHERE payout_date = '$today' AND status = 'released'
 ")->fetch_assoc()['total'];
 
-/* QUEUE MONITORING */
+/* QUEUE MONITORING: ONLY WAITING + SERVING */
 $queue = [];
 $q = $conn->query("
     SELECT
@@ -38,7 +37,7 @@ $q = $conn->query("
     FROM queue_entries q
     JOIN beneficiaries b ON q.beneficiary_id = b.id
     WHERE q.transaction_date = '$today'
-      AND q.status IN ('waiting', 'serving', 'released')
+      AND q.status IN ('waiting', 'serving')
     ORDER BY q.id ASC
 ");
 
@@ -46,7 +45,7 @@ while ($row = $q->fetch_assoc()) {
     $queue[] = $row;
 }
 
-/* PAYOUT TRANSACTION HISTORY */
+/* PAYOUT HISTORY: RELEASED ONLY */
 $history = [];
 $h = $conn->query("
     SELECT
