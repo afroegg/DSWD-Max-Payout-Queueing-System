@@ -6,17 +6,32 @@ header('Content-Type: application/json');
 $today = date('Y-m-d');
 
 /* COUNTS */
-$waiting = $conn->query("SELECT COUNT(*) as total FROM queue_entries WHERE transaction_date='$today' AND status='waiting'")->fetch_assoc()['total'];
-$serving = $conn->query("SELECT COUNT(*) as total FROM queue_entries WHERE transaction_date='$today' AND status='serving'")->fetch_assoc()['total'];
-$released = $conn->query("SELECT COUNT(*) as total FROM queue_entries WHERE transaction_date='$today' AND status='released'")->fetch_assoc()['total'];
+$waiting = $conn->query("
+    SELECT COUNT(*) as total
+    FROM queue_entries
+    WHERE transaction_date='$today' AND status='waiting'
+")->fetch_assoc()['total'];
+
+$serving = $conn->query("
+    SELECT COUNT(*) as total
+    FROM queue_entries
+    WHERE transaction_date='$today' AND status='serving'
+")->fetch_assoc()['total'];
+
+$released = $conn->query("
+    SELECT COUNT(*) as total
+    FROM queue_entries
+    WHERE transaction_date='$today' AND status='released'
+")->fetch_assoc()['total'];
 
 /* QUEUE */
 $queue = [];
 $q = $conn->query("
-    SELECT q.queue_number, b.first_name, b.last_name, b.program_type, q.status
+    SELECT q.id, q.queue_number, b.first_name, b.last_name, b.program_type, q.status
     FROM queue_entries q
     JOIN beneficiaries b ON q.beneficiary_id = b.id
     WHERE q.transaction_date='$today'
+      AND q.status IN ('waiting','serving','released')
     ORDER BY q.id ASC
 ");
 
