@@ -152,6 +152,10 @@ body {
     align-items: start;
 }
 
+.actions .btn {
+    min-width: 160px;
+}
+
 .actions .btn:first-child {
     grid-column: 1;
     justify-self: start;
