@@ -14,10 +14,10 @@ body {
     background: #0f2f56;
     color: white;
     font-family: Arial, sans-serif;
-
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .display-container {
@@ -28,6 +28,7 @@ body {
     font-size: 40px;
     letter-spacing: 5px;
     margin-bottom: 20px;
+    opacity: 0.85;
 }
 
 .queue-number {
@@ -36,11 +37,22 @@ body {
     letter-spacing: 10px;
 }
 
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.queue-number.active {
+    animation: pulse 1.5s infinite;
+}
+
 .audio-btn {
     position: fixed;
     top: 20px;
     left: 20px;
-    padding: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
     border: none;
     background: white;
     color: #0f2f56;
@@ -54,7 +66,7 @@ body {
 <body>
 
 <button id="audioBtn" class="audio-btn" onclick="enableAudio()">
-Enable Audio
+    Enable Audio
 </button>
 
 <div class="display-container">
@@ -67,10 +79,8 @@ let audioEnabled = false;
 let lastQueue = null;
 let selectedVoice = null;
 
-/* 🔥 LOAD VOICES PROPERLY */
 function initVoices() {
     const voices = speechSynthesis.getVoices();
-
     if (!voices.length) return;
 
     selectedVoice =
@@ -79,32 +89,26 @@ function initVoices() {
         voices[0];
 }
 
-/*  VERY IMPORTANT: WAIT FOR VOICES */
 speechSynthesis.onvoiceschanged = initVoices;
 
-/* ENABLE AUDIO */
 function enableAudio() {
     initVoices();
 
     const btn = document.getElementById("audioBtn");
-
-    //  hide immediately (reliable)
     btn.style.display = "none";
 
     const test = new SpeechSynthesisUtterance("Audio enabled");
+    if (selectedVoice) {
+        test.voice = selectedVoice;
+        test.lang = selectedVoice.lang;
+    }
 
-    if (selectedVoice) test.voice = selectedVoice;
-
-    test.rate = 1;
-
-    // enable audio regardless of event reliability
     audioEnabled = true;
 
     speechSynthesis.cancel();
     speechSynthesis.speak(test);
 }
 
-/* SPEAK */
 function speakQueue(number) {
     if (!audioEnabled) return;
 
@@ -123,27 +127,25 @@ function speakQueue(number) {
     speechSynthesis.speak(msg);
 }
 
-/* FETCH */
 async function loadNowServing() {
     try {
         const res = await fetch("../api/live_data.php");
         const data = await res.json();
 
-        const serving = data.queue.find(q => q.status === "serving");
+        const currentQueue = data.currentServing;
         const el = document.getElementById("queueNumber");
 
-        if (serving) {
-            const currentQueue = serving.queue_number;
-
+        if (currentQueue) {
             el.textContent = currentQueue;
+            el.classList.add("active");
 
             if (currentQueue !== lastQueue) {
                 speakQueue(currentQueue);
                 lastQueue = currentQueue;
             }
-
         } else {
             el.textContent = "---";
+            el.classList.remove("active");
         }
 
     } catch (err) {
