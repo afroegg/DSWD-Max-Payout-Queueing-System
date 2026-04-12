@@ -4,7 +4,12 @@ $user = "root";
 $pass = "";
 $dbname = "dswd_max_payout";
 
-$conn = new mysqli($host, $user, $pass, $dbname);
+$conn = new mysqli(
+    "HOST_FROM_PROVIDER",
+    "USERNAME",
+    "PASSWORD",
+    "DATABASE"
+);
 
 if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
