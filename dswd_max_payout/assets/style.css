@@ -1,0 +1,390 @@
+/* ===== BASE ===== */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #eef1f4;
+    color: #1f2937;
+}
+
+/* ===== LAYOUT ===== */
+.app {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    min-height: 100vh;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.content {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background: #f7f7f7;
+    border-bottom: 1px solid #cfd6de;
+    padding: 14px 22px;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    background: #1f2d3d;
+    color: #d8e1ea;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px;
+}
+
+.logo {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 28px;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    text-decoration: none;
+    color: #d8e1ea;
+}
+
+.sidebar a:hover {
+    background: #27384b;
+}
+
+.sidebar a.active {
+    background: #27384b;
+    border-left: 3px solid #19a0db;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+/* ===== STATS ===== */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.stat {
+    background: #fff;
+    border: 1px solid #cfd6de;
+    padding: 24px;
+}
+
+.stat span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.stat h2 {
+    font-size: 26px;
+    margin: 6px 0 0;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 48px;
+    padding: 0 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn.primary {
+    background: #168fcb;
+    color: #fff;
+}
+
+.btn.primary:hover {
+    background: #127caf;
+}
+
+.btn.success {
+    background: #19a34a;
+    color: #fff;
+}
+
+.btn.success:hover {
+    background: #14853c;
+}
+
+.btn.neutral {
+    background: #fff;
+    border: 1px solid #94a3b8;
+}
+
+/* ===== ACTIONS ===== */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+/* ===== PANELS ===== */
+.dashboard-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    flex: 1;
+}
+
+.panel {
+    background: #fff;
+    border: 1px solid #cfd6de;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.panel-header {
+    padding: 12px;
+    border-bottom: 1px solid #d7dde5;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+/* ===== TABLE ===== */
+.table-wrap {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-table th {
+    background: #f5f7fa;
+    font-size: 12px;
+    position: sticky;
+    top: 0;
+}
+
+.dashboard-table tr:hover td {
+    background: #f9fbfc;
+}
+
+/* ===== STATUS ===== */
+.status.waiting { color: #6b7280; }
+.status.serving { color: #0ea5e9; }
+.status.released { color: #16a34a; }
+
+/* HIGHLIGHT SERVING */
+.row-serving td {
+    background: #e0f2fe !important;
+    font-weight: 600;
+}
+
+/* ===== FORM SYSTEM ===== */
+.form-page-card {
+    background: #fff;
+    border: 1px solid #cfd6de;
+    padding: 28px;
+    max-width: 800px;
+}
+
+.form-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.form-grid.two-col {
+    grid-template-columns: 1fr 1fr;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-group input,
+.field-group select {
+    height: 50px;
+    padding: 0 12px;
+    border: 1px solid #94a3b8;
+}
+
+.field-group input:focus,
+.field-group select:focus {
+    border-color: #168fcb;
+    outline: none;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* ===== LOGIN PAGE PREMIUM ===== */
+
+.login-body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    /* NEW BACKGROUND */
+    background: url("../assets/dswd.png") center center / cover no-repeat;
+    position: relative;
+}
+
+.login-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: rgba(10, 25, 45, 0.75); /* dark blue overlay */
+    backdrop-filter: blur(3px);
+
+    z-index: 0;
+}
+
+/* HEADER BANNER (FIXED CROPPING) */
+.login-header {
+    height: 190px;
+    background: url("../assets/header.png") center 30% / cover no-repeat;
+    border-bottom: 3px solid #19a0db;
+}
+
+/* CENTER AREA */
+.login-main {
+    margin-top: -150px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-header,
+.login-main {
+    position: relative;
+    z-index: 1;
+}
+
+/* LOGIN CARD */
+.login-panel {
+    background: #ffffff;
+    border: 1px solid #cfd6de;
+    padding: 42px 38px;
+    width: 100%;
+    max-width: 420px;
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
+
+/* BRAND */
+.login-brand {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* LOGO */
+.login-logo {
+    width: 60px;
+    margin-bottom: 10px;
+}
+
+/* TITLE */
+.login-brand h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f2f56;
+}
+
+.login-brand p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* FORM */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.login-form input {
+    height: 50px;
+    padding: 0 14px;
+    border: 1px solid #94a3b8;
+    font-size: 14px;
+}
+
+.login-form input:focus {
+    border-color: #168fcb;
+    outline: none;
+}
+
+/* BUTTON */
+.login-form .btn {
+    height: 50px;
+    font-size: 15px;
+}
+
+/* ERROR */
+.error-message {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 10px;
+    font-size: 13px;
+}
+
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-panels {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid.two-col {
+        grid-template-columns: 1fr;
+    }
+}
