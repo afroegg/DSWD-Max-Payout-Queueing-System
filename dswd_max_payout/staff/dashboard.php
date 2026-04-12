@@ -29,8 +29,8 @@ include('../auth/check.php');
     </div>
 
     <div class="stat">
-        <span>SERVING</span>
-        <h2 id="servingCount">0</h2>
+        <span>NOW SERVING</span>
+        <h2 id="servingCount">---</h2>
     </div>
 
     <div class="stat">
@@ -112,24 +112,20 @@ async function loadLiveData() {
         const data = await res.json();
 
         document.getElementById("waitingCount").innerText = data.waiting;
-        document.getElementById("servingCount").innerText = data.serving;
+        document.getElementById("servingCount").innerText = data.currentServing ? data.currentServing : "---";
         document.getElementById("releasedCount").innerText = data.released;
 
         let queueHTML = "";
         data.queue.forEach(row => {
-            let actionHtml = "-";
-
-            if (row.status === "waiting") {
-                actionHtml = `
-                    <form method="POST" action="../api/remove_queue.php" onsubmit="return confirm('Remove this queue entry?');" style="margin:0;">
-                        <input type="hidden" name="queue_id" value="${row.id}">
-                        <button type="submit" class="table-remove-btn">Remove</button>
-                    </form>
-                `;
-            }
+            let actionHtml = `
+                <form method="POST" action="../api/remove_queue.php" onsubmit="return confirm('Remove this queue entry?');" style="margin:0;">
+                    <input type="hidden" name="queue_id" value="${row.id}">
+                    <button type="submit" class="table-remove-btn">Remove</button>
+                </form>
+            `;
 
             queueHTML += `
-                <tr class="${row.status === 'serving' ? 'row-serving' : ''}">
+                <tr>
                     <td>${row.queue_number}</td>
                     <td>${row.first_name} ${row.last_name}</td>
                     <td>${row.program_type}</td>
@@ -142,7 +138,7 @@ async function loadLiveData() {
         if (!data.queue.length) {
             queueHTML = `
                 <tr>
-                    <td colspan="5" class="empty-state">No waiting or serving queues.</td>
+                    <td colspan="5" class="empty-state">No waiting queues.</td>
                 </tr>
             `;
         }
