@@ -276,13 +276,14 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
     background:
         linear-gradient(rgba(10, 25, 45, 0.72), rgba(10, 25, 45, 0.72)),
-        url("../assets/bg2.png") center center / cover no-repeat;
+        url("../assets/bg2.png") center center / cover no-repeat fixed;
+    overflow: hidden;
 }
 
 .login-page-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
 }
 
 .login-banner-wrap {
@@ -293,6 +294,7 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .login-banner-img {
@@ -300,35 +302,36 @@ body {
     width: 100%;
     max-width: 1366px;
     height: auto;
+    max-height: 190px;
     object-fit: contain;
 }
 
 .login-main {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px 60px;
+    padding: 24px;
     box-sizing: border-box;
+    min-height: 0;
 }
 
 .login-panel {
     width: 100%;
-    max-width: 520px;
-    background: rgba(255,255,255,0.96);
+    max-width: 500px;
+    background: rgba(255,255,255,0.97);
     border: 1px solid #cfd6de;
     box-shadow: 0 18px 45px rgba(0,0,0,0.28);
-    padding: 38px 42px;
+    padding: 34px 38px;
     box-sizing: border-box;
 }
 
 .login-brand {
     text-align: center;
-    margin-bottom: 26px;
+    margin-bottom: 24px;
 }
 
 .login-logo {
-    width: 68px;
+    width: 64px;
     height: auto;
     display: block;
     margin: 0 auto 14px;
@@ -336,7 +339,7 @@ body {
 
 .login-brand h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     color: #0f2f56;
     letter-spacing: 0.2px;
@@ -385,13 +388,13 @@ body {
 
 /* ===== RESPONSIVE LOGIN ===== */
 @media (max-width: 900px) {
-    .login-main {
-        padding: 28px 16px 40px;
+    .login-banner-img {
+        max-height: 140px;
     }
 
     .login-panel {
         max-width: 440px;
-        padding: 30px 24px;
+        padding: 28px 24px;
     }
 
     .login-brand h1 {
@@ -404,8 +407,23 @@ body {
 }
 
 @media (max-width: 640px) {
+    .login-body {
+        overflow: auto;
+    }
+
+    .login-page-shell {
+        height: auto;
+        min-height: 100vh;
+        grid-template-rows: auto 1fr;
+    }
+
     .login-banner-img {
         max-width: 100%;
+        max-height: 110px;
+    }
+
+    .login-main {
+        padding: 18px 14px 28px;
     }
 
     .login-panel {
@@ -414,7 +432,7 @@ body {
     }
 
     .login-logo {
-        width: 58px;
+        width: 56px;
     }
 
     .login-brand h1 {
