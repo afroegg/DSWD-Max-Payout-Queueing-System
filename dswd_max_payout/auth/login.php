@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-page-shell">
 
     <div class="login-top-banner">
-        <img src="../assets/login-header.png" alt="DSWD Header" class="login-top-banner-img">
+        <img src="../assets/header.png" alt="DSWD Header" class="login-top-banner-img">
     </div>
 
     <div class="login-red-strip"></div>
