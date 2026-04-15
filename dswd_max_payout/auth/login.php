@@ -44,12 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="login-body">
 
 <div class="login-page-shell">
-    <header class="login-banner-wrap">
-        <img src="../assets/login-header.png" alt="DSWD Header" class="login-banner-img">
-    </header>
 
-    <main class="login-main">
+    <div class="login-top-banner">
+        <img src="../assets/login-header.png" alt="DSWD Header" class="login-top-banner-img">
+    </div>
+
+    <div class="login-red-strip"></div>
+
+    <div class="login-main-area">
         <div class="login-panel">
+
             <div class="login-brand">
                 <img src="../assets/dswd_logo.png" class="login-logo" alt="DSWD Logo">
                 <h1>DSWD SYSTEM</h1>
@@ -66,8 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <button type="submit" class="btn primary wide-btn">Login</button>
             </form>
+
         </div>
-    </main>
+    </div>
+
 </div>
 
 </body>
