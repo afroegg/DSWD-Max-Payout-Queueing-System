@@ -49,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <img src="../assets/header.png" alt="DSWD Header" class="login-top-banner-img">
     </div>
 
-    <div class="login-red-strip"></div>
 
     <div class="login-main-area">
         <div class="login-panel">
