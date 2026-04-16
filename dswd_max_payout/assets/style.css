@@ -118,6 +118,7 @@ body {
     border: none;
     cursor: pointer;
     text-decoration: none;
+    box-sizing: border-box;
 }
 
 .btn.primary {
@@ -141,6 +142,11 @@ body {
 .btn.neutral {
     background: #fff;
     border: 1px solid #94a3b8;
+    color: #1f2937;
+}
+
+.btn.neutral:hover {
+    background: #f8fafc;
 }
 
 /* ===== ACTIONS ===== */
@@ -211,6 +217,7 @@ body {
     font-size: 12px;
     position: sticky;
     top: 0;
+    z-index: 2;
 }
 
 .dashboard-table tr:hover td {
@@ -218,14 +225,37 @@ body {
 }
 
 /* ===== STATUS ===== */
-.status.waiting { color: #6b7280; }
-.status.serving { color: #0ea5e9; }
-.status.released { color: #16a34a; }
+.status.waiting {
+    color: #6b7280;
+}
+
+.status.serving {
+    color: #0ea5e9;
+}
+
+.status.released {
+    color: #16a34a;
+}
 
 /* HIGHLIGHT SERVING */
 .row-serving td {
     background: #e0f2fe !important;
     font-weight: 600;
+}
+
+/* ===== REMOVE BUTTON ===== */
+.table-remove-btn {
+    background: #b91c1c;
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-remove-btn:hover {
+    background: #991b1b;
 }
 
 /* ===== FORM SYSTEM ===== */
@@ -245,51 +275,60 @@ body {
     grid-template-columns: 1fr 1fr;
 }
 
+.form-grid.single-col {
+    grid-template-columns: 1fr;
+}
+
 .field-group {
     display: flex;
     flex-direction: column;
 }
 
 .field-group input,
-.field-group select {
+.field-group select,
+.field-group textarea {
     height: 50px;
     padding: 0 12px;
     border: 1px solid #94a3b8;
+    box-sizing: border-box;
+    font-size: 15px;
+    background: #ffffff;
 }
 
 .field-group input:focus,
-.field-group select:focus {
+.field-group select:focus,
+.field-group textarea:focus {
     border-color: #168fcb;
     outline: none;
+    box-shadow: inset 0 0 0 1px #168fcb;
 }
 
 .form-actions {
     display: flex;
     gap: 10px;
     margin-top: 20px;
+    flex-wrap: wrap;
 }
 
 /* ===== LOGIN PAGE ===== */
 .login-body {
     margin: 0;
-    min-height: 100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background:
-        linear-gradient(rgba(10, 25, 45, 0.72), rgba(10, 25, 45, 0.72)),
-        url("../assets/bg2.png") center center / cover no-repeat fixed;
+    height: 100vh;
     overflow: hidden;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0f2f56;
 }
 
 .login-page-shell {
     height: 100vh;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto 20px 1fr;
 }
 
-.login-banner-wrap {
+/* TOP BANNER */
+.login-top-banner {
     width: 100%;
     background: #ffffff;
-    border-bottom: 4px solid #ef4444;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -297,37 +336,48 @@ body {
     flex-shrink: 0;
 }
 
-.login-banner-img {
+.login-top-banner-img {
     display: block;
     width: 100%;
-    max-width: 1366px;
     height: auto;
-    max-height: 190px;
+    max-height: 185px;
     object-fit: contain;
 }
 
-.login-main {
+/* RED STRIP */
+.login-red-strip {
+    background: #ff1f1f;
+    border-top: 2px solid #0ea5e9;
+}
+
+/* MAIN AREA WITH BG */
+.login-main-area {
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 28px 20px 40px;
     box-sizing: border-box;
-    min-height: 0;
+    background:
+        linear-gradient(rgba(10, 25, 45, 0.72), rgba(10, 25, 45, 0.72)),
+        url("../assets/dswd_bg.png") center center / cover no-repeat;
 }
 
+/* LOGIN CARD */
 .login-panel {
     width: 100%;
-    max-width: 500px;
-    background: rgba(255,255,255,0.97);
+    max-width: 540px;
+    background: rgba(255, 255, 255, 0.97);
     border: 1px solid #cfd6de;
     box-shadow: 0 18px 45px rgba(0,0,0,0.28);
-    padding: 34px 38px;
+    padding: 40px 44px;
     box-sizing: border-box;
 }
 
+/* BRAND */
 .login-brand {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .login-logo {
@@ -339,26 +389,27 @@ body {
 
 .login-brand h1 {
     margin: 0;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 800;
     color: #0f2f56;
     letter-spacing: 0.2px;
 }
 
 .login-brand p {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     font-size: 15px;
     color: #64748b;
 }
 
+/* LOGIN FORM */
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
 .login-form input {
-    height: 54px;
+    height: 56px;
     padding: 0 16px;
     font-size: 15px;
     border: 1px solid #94a3b8;
@@ -376,6 +427,12 @@ body {
     width: 100%;
 }
 
+.login-form .btn {
+    height: 54px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
 .error-message {
     background: #fef2f2;
     border: 1px solid #fca5a5;
@@ -386,15 +443,46 @@ body {
     box-sizing: border-box;
 }
 
-/* ===== RESPONSIVE LOGIN ===== */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
-    .login-banner-img {
-        max-height: 140px;
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-panels {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid.two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .actions .btn:first-child,
+    .actions .btn:last-child {
+        grid-column: auto;
+        justify-self: stretch;
+    }
+
+    .actions .btn {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .login-page-shell {
+        grid-template-rows: auto 14px 1fr;
+    }
+
+    .login-top-banner-img {
+        max-height: 130px;
     }
 
     .login-panel {
-        max-width: 440px;
-        padding: 28px 24px;
+        max-width: 460px;
+        padding: 30px 24px;
     }
 
     .login-brand h1 {
@@ -408,22 +496,23 @@ body {
 
 @media (max-width: 640px) {
     .login-body {
+        height: auto;
+        min-height: 100vh;
         overflow: auto;
     }
 
     .login-page-shell {
-        height: auto;
         min-height: 100vh;
-        grid-template-rows: auto 1fr;
+        height: auto;
+        grid-template-rows: auto 10px 1fr;
     }
 
-    .login-banner-img {
-        max-width: 100%;
-        max-height: 110px;
+    .login-top-banner-img {
+        max-height: 100px;
     }
 
-    .login-main {
-        padding: 18px 14px 28px;
+    .login-main-area {
+        padding: 20px 14px 28px;
     }
 
     .login-panel {
@@ -443,33 +532,9 @@ body {
         height: 50px;
         font-size: 14px;
     }
-}
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
-    .app {
-        grid-template-columns: 1fr;
+    .login-form .btn {
+        height: 50px;
+        font-size: 15px;
     }
-
-    .dashboard-panels {
-        grid-template-columns: 1fr;
-    }
-
-    .form-grid.two-col {
-        grid-template-columns: 1fr;
-    }
-}
-
-.table-remove-btn {
-    background: #b91c1c;
-    color: #ffffff;
-    border: none;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.table-remove-btn:hover {
-    background: #991b1b;
 }
