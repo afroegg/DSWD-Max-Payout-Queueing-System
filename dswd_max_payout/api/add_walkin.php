@@ -4,15 +4,18 @@ include('../config/db.php');
 
 function generateQueueNumber($conn) {
     $today = date('Y-m-d');
-    $prefix = "MP-" . date('Ymd') . "-";
 
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM queue_entries WHERE transaction_date = ?");
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) AS total
+        FROM queue_entries
+        WHERE transaction_date = ?
+    ");
     $stmt->bind_param("s", $today);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
 
-    $next = str_pad($result['total'] + 1, 3, "0", STR_PAD_LEFT);
-    return $prefix . $next;
+    $next = str_pad($result['total'] + 1, 5, "0", STR_PAD_LEFT);
+    return "MPO-" . $next;
 }
 
 $first_name = trim($_POST['first_name']);
