@@ -1,29 +1,39 @@
 /* ===== BASE ===== */
+html,
 body {
     margin: 0;
+    height: 100%;
     font-family: "Segoe UI", Arial, sans-serif;
     background: #eef1f4;
     color: #1f2937;
+    overflow: hidden;
 }
 
 /* ===== LAYOUT ===== */
 .app {
     display: grid;
     grid-template-columns: 1fr 220px;
+    height: 100vh;
     min-height: 100vh;
+    overflow: hidden;
 }
 
 .main {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .content {
     padding: 22px;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* ===== HEADER ===== */
@@ -31,6 +41,7 @@ body {
     background: #f7f7f7;
     border-bottom: 1px solid #cfd6de;
     padding: 14px 22px;
+    flex-shrink: 0;
 }
 
 .header-row {
@@ -52,6 +63,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px 14px;
+    overflow: hidden;
 }
 
 .logo {
@@ -88,12 +100,15 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
+    flex-shrink: 0;
 }
 
 .stat {
     background: #fff;
     border: 1px solid #cfd6de;
     padding: 24px;
+    min-height: 88px;
+    box-sizing: border-box;
 }
 
 .stat span {
@@ -104,6 +119,8 @@ body {
 .stat h2 {
     font-size: 26px;
     margin: 6px 0 0;
+    line-height: 1.2;
+    word-break: break-word;
 }
 
 /* ===== BUTTONS ===== */
@@ -156,6 +173,7 @@ body {
     gap: 14px;
     margin: 18px 0;
     align-items: start;
+    flex-shrink: 0;
 }
 
 .actions .btn {
@@ -178,6 +196,8 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 14px;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .panel {
@@ -186,6 +206,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
 }
 
 .panel-header {
@@ -193,23 +214,46 @@ body {
     border-bottom: 1px solid #d7dde5;
     background: #f8fafc;
     font-weight: 600;
+    flex-shrink: 0;
 }
 
 /* ===== TABLE ===== */
 .table-wrap {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Separate scrollbars for queue and history panels */
+.table-wrap::-webkit-scrollbar {
+    width: 10px;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+    background: #eef2f7;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+    background: #b7c2cf;
+}
+
+.table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .dashboard-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .dashboard-table th,
 .dashboard-table td {
     padding: 12px;
     border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    word-wrap: break-word;
 }
 
 .dashboard-table th {
@@ -218,6 +262,15 @@ body {
     position: sticky;
     top: 0;
     z-index: 2;
+}
+
+/* Queue numbers look cleaner and shorter */
+.dashboard-table td:first-child,
+.dashboard-table th:first-child {
+    width: 150px;
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .dashboard-table tr:hover td {
@@ -327,7 +380,6 @@ body {
     grid-template-rows: 168px 1fr;
 }
 
-/* TOP BANNER */
 .login-top-banner {
     width: 100%;
     background: #ffffff;
@@ -342,7 +394,6 @@ body {
     object-position: center;
 }
 
-/* MAIN AREA */
 .login-main-area {
     min-height: 0;
     display: flex;
@@ -355,7 +406,6 @@ body {
         url("../assets/dswd_bg.png") center center / cover no-repeat;
 }
 
-/* LOGIN CARD */
 .login-panel {
     width: 100%;
     max-width: 520px;
@@ -367,7 +417,6 @@ body {
     border-radius: 20px;
 }
 
-/* BRAND */
 .login-brand {
     text-align: center;
     margin-bottom: 22px;
@@ -394,7 +443,6 @@ body {
     color: #64748b;
 }
 
-/* LOGIN FORM */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -441,12 +489,34 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
+    html,
+    body {
+        overflow: auto;
+    }
+
     .app {
         grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .main {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .content {
+        height: auto;
+        overflow: visible;
     }
 
     .dashboard-panels {
         grid-template-columns: 1fr;
+        overflow: visible;
+    }
+
+    .panel {
+        min-height: 420px;
     }
 
     .form-grid.two-col {
