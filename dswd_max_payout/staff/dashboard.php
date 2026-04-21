@@ -171,6 +171,8 @@ if (!data.history.length) {
     `;
 }
 
+document.getElementById("historyTable").innerHTML = historyHTML;
+
 setInterval(loadLiveData, 3000);
 loadLiveData();
 
