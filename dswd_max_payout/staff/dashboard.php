@@ -146,7 +146,7 @@ async function loadLiveData() {
 
         document.getElementById("queueTable").innerHTML = queueHTML;
 
-     let historyHTML = "";
+   let historyHTML = "";
 data.history.forEach(row => {
     const releasedDate = row.released_at
         ? new Date(row.released_at.replace(" ", "T")).toLocaleString()
