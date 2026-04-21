@@ -601,55 +601,85 @@ body {
 }
 
 
-/* Payout transaction table alignment */
+/* =========================
+   Payout Transactions Table
+   ========================= */
 .payout-table {
     width: 100%;
     table-layout: fixed;
+    border-collapse: collapse;
 }
 
-.payout-table th,
-.payout-table td {
+.payout-table thead th,
+.payout-table tbody td {
     padding: 14px 12px;
     vertical-align: middle;
     text-align: left;
-    word-break: break-word;
+    overflow: hidden;
 }
 
+.payout-table thead th {
+    white-space: nowrap;
+}
+
+.payout-table tbody td {
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Queue No. */
 .payout-table th:nth-child(1),
 .payout-table td:nth-child(1) {
-    width: 22%;
+    width: 24%;
+    min-width: 24%;
+    max-width: 24%;
     white-space: nowrap;
     font-weight: 700;
 }
 
+/* Name */
 .payout-table th:nth-child(2),
 .payout-table td:nth-child(2) {
-    width: 26%;
+    width: 24%;
+    min-width: 24%;
+    max-width: 24%;
 }
 
+/* Amount */
 .payout-table th:nth-child(3),
 .payout-table td:nth-child(3) {
     width: 16%;
+    min-width: 16%;
+    max-width: 16%;
     white-space: nowrap;
 }
 
+/* Batch */
 .payout-table th:nth-child(4),
 .payout-table td:nth-child(4) {
     width: 10%;
+    min-width: 10%;
+    max-width: 10%;
     text-align: center;
     white-space: nowrap;
 }
 
+/* Released Date */
 .payout-table th:nth-child(5),
 .payout-table td:nth-child(5) {
     width: 26%;
+    min-width: 26%;
+    max-width: 26%;
     white-space: nowrap;
 }
 
-.payout-table thead th {
-    text-align: left;
-}
-
+/* keep header centered only where needed */
 .payout-table thead th:nth-child(4) {
     text-align: center;
+}
+
+/* empty row fix */
+.payout-table .empty-state {
+    text-align: center !important;
+    white-space: normal !important;
 }
