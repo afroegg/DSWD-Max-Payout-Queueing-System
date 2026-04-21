@@ -81,13 +81,14 @@ include('../auth/check.php');
     </div>
 
     <div class="table-wrap big">
-        <table class="dashboard-table big">
+        <table class="dashboard-table big payout-table">
             <thead>
                 <tr>
                     <th>Queue No.</th>
                     <th>Name</th>
                     <th>Amount</th>
                     <th>Batch</th>
+                    <th>Released Date</th>
                 </tr>
             </thead>
 
