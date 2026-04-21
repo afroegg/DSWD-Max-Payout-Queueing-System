@@ -683,3 +683,9 @@ body {
     text-align: center !important;
     white-space: normal !important;
 }
+
+/* Optional: make queue table align more cleanly too */
+.dashboard-table.big {
+    table-layout: fixed;
+    width: 100%;
+}
