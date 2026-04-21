@@ -146,31 +146,29 @@ async function loadLiveData() {
 
         document.getElementById("queueTable").innerHTML = queueHTML;
 
-        let historyHTML = "";
-        data.history.forEach(row => {
-            historyHTML += `
-                <tr>
-                    <td>${row.queue_number}</td>
-                    <td>${row.first_name} ${row.last_name}</td>
-                    <td>₱${parseFloat(row.amount).toFixed(2)}</td>
-                    <td>${row.payout_batch}</td>
-                </tr>
-            `;
-        });
+     let historyHTML = "";
+data.history.forEach(row => {
+    const releasedDate = row.released_at
+        ? new Date(row.released_at.replace(" ", "T")).toLocaleString()
+        : "-";
 
-        if (!data.history.length) {
-            historyHTML = `
-                <tr>
-                    <td colspan="4" class="empty-state">No payout transactions yet.</td>
-                </tr>
-            `;
-        }
+    historyHTML += `
+        <tr>
+            <td>${row.queue_number}</td>
+            <td>${row.first_name} ${row.last_name}</td>
+            <td>₱${parseFloat(row.amount).toFixed(2)}</td>
+            <td>${row.payout_batch}</td>
+            <td>${releasedDate}</td>
+        </tr>
+    `;
+});
 
-        document.getElementById("historyTable").innerHTML = historyHTML;
-
-    } catch (err) {
-        console.error("Live update error:", err);
-    }
+if (!data.history.length) {
+    historyHTML = `
+        <tr>
+            <td colspan="5" class="empty-state">No payout transactions yet.</td>
+        </tr>
+    `;
 }
 
 setInterval(loadLiveData, 3000);
