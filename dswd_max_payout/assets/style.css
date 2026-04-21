@@ -253,7 +253,8 @@ body {
     padding: 12px;
     border-bottom: 1px solid #e2e8f0;
     vertical-align: middle;
-    word-wrap: break-word;
+    text-align: left;
+    overflow: hidden;
 }
 
 .dashboard-table th {
@@ -262,19 +263,66 @@ body {
     position: sticky;
     top: 0;
     z-index: 2;
+    white-space: nowrap;
 }
 
-/* Queue numbers look cleaner and shorter */
-.dashboard-table td:first-child,
-.dashboard-table th:first-child {
-    width: 150px;
-    white-space: nowrap;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+.dashboard-table td {
+    word-break: normal;
+    overflow-wrap: anywhere;
 }
 
 .dashboard-table tr:hover td {
     background: #f9fbfc;
+}
+
+/* ===== QUEUE MONITORING ALIGNMENT ===== */
+.dashboard-table.big {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.dashboard-table.big thead th:nth-child(1),
+.dashboard-table.big tbody td:nth-child(1) {
+    width: 23%;
+    min-width: 23%;
+    max-width: 23%;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.dashboard-table.big thead th:nth-child(2),
+.dashboard-table.big tbody td:nth-child(2) {
+    width: 24%;
+    min-width: 24%;
+    max-width: 24%;
+}
+
+.dashboard-table.big thead th:nth-child(3),
+.dashboard-table.big tbody td:nth-child(3) {
+    width: 18%;
+    min-width: 18%;
+    max-width: 18%;
+}
+
+.dashboard-table.big thead th:nth-child(4),
+.dashboard-table.big tbody td:nth-child(4) {
+    width: 15%;
+    min-width: 15%;
+    max-width: 15%;
+    white-space: nowrap;
+}
+
+.dashboard-table.big thead th:nth-child(5),
+.dashboard-table.big tbody td:nth-child(5) {
+    width: 20%;
+    min-width: 20%;
+    max-width: 20%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.dashboard-table.big thead th:nth-child(5) {
+    text-align: center;
 }
 
 /* ===== STATUS ===== */
@@ -600,10 +648,7 @@ body {
     }
 }
 
-
-/* =========================
-   Payout Transactions Table
-   ========================= */
+/* ===== PAYOUT TRANSACTIONS ALIGNMENT ===== */
 .payout-table {
     width: 100%;
     table-layout: fixed;
@@ -627,17 +672,15 @@ body {
     overflow-wrap: anywhere;
 }
 
-/* Queue No. */
 .payout-table th:nth-child(1),
 .payout-table td:nth-child(1) {
-    width: 24%;
-    min-width: 24%;
-    max-width: 24%;
+    width: 22%;
+    min-width: 22%;
+    max-width: 22%;
     white-space: nowrap;
     font-weight: 700;
 }
 
-/* Name */
 .payout-table th:nth-child(2),
 .payout-table td:nth-child(2) {
     width: 24%;
@@ -645,7 +688,6 @@ body {
     max-width: 24%;
 }
 
-/* Amount */
 .payout-table th:nth-child(3),
 .payout-table td:nth-child(3) {
     width: 16%;
@@ -654,7 +696,6 @@ body {
     white-space: nowrap;
 }
 
-/* Batch */
 .payout-table th:nth-child(4),
 .payout-table td:nth-child(4) {
     width: 10%;
@@ -664,28 +705,19 @@ body {
     white-space: nowrap;
 }
 
-/* Released Date */
 .payout-table th:nth-child(5),
 .payout-table td:nth-child(5) {
-    width: 26%;
-    min-width: 26%;
-    max-width: 26%;
+    width: 28%;
+    min-width: 28%;
+    max-width: 28%;
     white-space: nowrap;
 }
 
-/* keep header centered only where needed */
 .payout-table thead th:nth-child(4) {
     text-align: center;
 }
 
-/* empty row fix */
 .payout-table .empty-state {
     text-align: center !important;
     white-space: normal !important;
-}
-
-/* Optional: make queue table align more cleanly too */
-.dashboard-table.big {
-    table-layout: fixed;
-    width: 100%;
 }
