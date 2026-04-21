@@ -599,3 +599,57 @@ body {
         border-radius: 10px;
     }
 }
+
+
+/* Payout transaction table alignment */
+.payout-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.payout-table th,
+.payout-table td {
+    padding: 14px 12px;
+    vertical-align: middle;
+    text-align: left;
+    word-break: break-word;
+}
+
+.payout-table th:nth-child(1),
+.payout-table td:nth-child(1) {
+    width: 22%;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.payout-table th:nth-child(2),
+.payout-table td:nth-child(2) {
+    width: 26%;
+}
+
+.payout-table th:nth-child(3),
+.payout-table td:nth-child(3) {
+    width: 16%;
+    white-space: nowrap;
+}
+
+.payout-table th:nth-child(4),
+.payout-table td:nth-child(4) {
+    width: 10%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.payout-table th:nth-child(5),
+.payout-table td:nth-child(5) {
+    width: 26%;
+    white-space: nowrap;
+}
+
+.payout-table thead th {
+    text-align: left;
+}
+
+.payout-table thead th:nth-child(4) {
+    text-align: center;
+}
