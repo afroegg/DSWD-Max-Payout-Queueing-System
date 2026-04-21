@@ -29,7 +29,7 @@ $dup = $conn->prepare("
     FROM queue_entries q
     INNER JOIN beneficiaries b ON q.beneficiary_id = b.id
     WHERE q.transaction_date = ?
-      AND q.status IN ('waiting', 'serving')
+      AND q.status IN ('waiting', 'serving', 'released')
       AND LOWER(TRIM(b.first_name)) = LOWER(TRIM(?))
       AND LOWER(TRIM(b.last_name)) = LOWER(TRIM(?))
       AND TRIM(b.contact_number) = TRIM(?)
