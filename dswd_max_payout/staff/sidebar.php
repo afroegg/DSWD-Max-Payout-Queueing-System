@@ -1,6 +1,7 @@
 <?php
 $current = basename($_SERVER['PHP_SELF']);
 ?>
+
 <aside class="sidebar">
     <div class="logo">ADMIN</div>
 
@@ -15,12 +16,11 @@ $current = basename($_SERVER['PHP_SELF']);
             Register
         </a>
 
-        <a href="verifier.php">
-    <span class="material-icons">fact_check</span>
-    Verifier Step 1
-</a>
-        
-          </nav>
+        <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
+            <span class="material-icons">fact_check</span>
+            Verifier Step 1
+        </a>
+    </nav>
 
     <div class="sidebar-footer">
         <a href="../auth/logout.php">
