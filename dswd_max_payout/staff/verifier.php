@@ -326,10 +326,10 @@ $result = $conn->query($query);
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Last Name</th>
+                            <th>Surname</th>
                             <th>First Name</th>
                             <th>Middle Name</th>
-                            <th>Extn. Name</th>
+                            <th>Suffix</th>
                             <th>Region</th>
                             <th>Province</th>
                             <th>City/Municipality</th>
