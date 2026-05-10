@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($password === $user['password']) {
             session_regenerate_id(true);
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['fullname'] = !empty($user['fullname']) ? $user['fullname'] : $user['username'];
 
@@ -61,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             max-width: 92%;
             min-height: 520px;
             background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
             display: grid;
             grid-template-columns: 1fr 1fr;
             overflow: hidden;
@@ -89,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-title h1 span {
-            color: #e11d2e;
+            color: #2563eb;
         }
 
         .login-title p {
@@ -110,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             height: 44px;
             border: 1px solid #b7c0cf;
-            border-radius: 5px;
+            border-radius: 6px;
             padding: 0 14px;
             font-size: 14px;
             outline: none;
@@ -159,7 +160,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-right {
             position: relative;
-            background: #172180;
+            background: linear-gradient(
+                135deg,
+                #0b2e83 0%,
+                #1e5bb8 52%,
+                #f8fafc 52%,
+                #ffffff 100%
+            );
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -170,39 +177,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-right::before {
             content: "";
             position: absolute;
-            width: 520px;
-            height: 520px;
-            background: #ed1c24;
-            border-radius: 45%;
-            left: -240px;
-            top: -120px;
-            transform: rotate(25deg);
+            width: 420px;
+            height: 420px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 50%;
+            left: -160px;
+            top: -150px;
         }
 
         .login-right::after {
             content: "";
             position: absolute;
-            width: 620px;
+            width: 420px;
             height: 420px;
-            background: #ed1c24;
+            background: rgba(37, 99, 235, 0.10);
             border-radius: 50%;
-            right: -260px;
-            bottom: -140px;
-            transform: rotate(-20deg);
+            right: -170px;
+            bottom: -170px;
         }
 
         .logo-panel {
             position: relative;
             z-index: 2;
-            width: 260px;
-            height: 260px;
-            background: #ffffff;
-            border-radius: 50%;
+            width: 270px;
+            min-height: 300px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 35px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            padding: 38px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.85);
         }
 
         .logo-panel img {
@@ -228,7 +234,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .system-label p {
             margin: 5px 0 0;
             font-size: 13px;
-            opacity: 0.9;
+            opacity: 0.92;
+        }
+
+        .small-accent {
+            width: 52px;
+            height: 4px;
+            background: #2563eb;
+            border-radius: 999px;
+            margin-top: 14px;
         }
 
         @media (max-width: 768px) {
@@ -238,6 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             .login-card {
                 grid-template-columns: 1fr;
+                min-height: auto;
             }
 
             .login-left {
@@ -252,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             .logo-panel {
                 width: 170px;
-                height: 170px;
+                min-height: 170px;
                 padding: 25px;
             }
 
@@ -271,6 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-title">
             <h1>LOG <span>IN</span></h1>
             <p>Hi! Log in to start managing the DSWD queueing system.</p>
+            <div class="small-accent"></div>
         </div>
 
         <form method="POST" class="login-form">
