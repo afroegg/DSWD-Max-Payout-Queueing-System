@@ -221,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: absolute;
             z-index: 2;
             bottom: 38px;
-            color: #ffffff;
+            color: #2563eb;
             text-align: center;
         }
 
