@@ -1,70 +1,5 @@
 <?php
 include('../auth/check.php');
-include('../config/db.php');
-
-date_default_timezone_set('Asia/Manila');
-
-function e($value) {
-    return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
-}
-
-function displayStatus($status) {
-    if ($status === 'WAITING_STEP_2') return 'WAITING: STEP 2';
-    if ($status === 'CALLED_STEP_2') return 'CALLED: STEP 2';
-    if ($status === 'WAITING_STEP_3') return 'WAITING: STEP 3';
-    if ($status === 'CALLED_STEP_3') return 'CALLED: STEP 3';
-    if ($status === 'PAID') return 'PAID';
-    if ($status === 'CANCELLED') return 'CANCELLED';
-
-    return 'NO QUEUE NUMBER';
-}
-
-function statusClass($status) {
-    if ($status === 'WAITING_STEP_2') return 'status-step-2';
-    if ($status === 'CALLED_STEP_2') return 'status-called-2';
-    if ($status === 'WAITING_STEP_3') return 'status-step-3';
-    if ($status === 'CALLED_STEP_3') return 'status-called-3';
-    if ($status === 'PAID') return 'status-paid';
-    if ($status === 'CANCELLED') return 'status-cancelled';
-
-    return 'status-none';
-}
-
-$query = "
-    SELECT 
-        b.id,
-        b.last_name,
-        b.first_name,
-        b.middle_name,
-        b.ext_name,
-        b.region,
-        b.province,
-        b.city_municipality,
-        b.barangay,
-        b.contact_number,
-        b.birthday_month,
-        b.birthday_day,
-        b.birthday_year,
-        b.age,
-        b.sex,
-        b.lgu,
-        q.queue_number,
-        q.queue_type,
-        q.workflow_status
-    FROM beneficiaries b
-    LEFT JOIN queue_entries q 
-        ON q.beneficiary_id = b.id
-        AND q.transaction_date = CURDATE()
-        AND q.id = (
-            SELECT MAX(q2.id)
-            FROM queue_entries q2
-            WHERE q2.beneficiary_id = b.id
-            AND q2.transaction_date = CURDATE()
-        )
-    ORDER BY b.last_name ASC, b.first_name ASC
-";
-
-$result = $conn->query($query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -288,9 +223,20 @@ $result = $conn->query($query);
             color: #6b7280;
             background: #f9fafb;
             border-top: 1px solid #d1d5db;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-weight: bold;
+        }
+
+        .loading-text {
             text-align: center;
             padding: 20px;
             color: #6b7280;
@@ -326,10 +272,10 @@ $result = $conn->query($query);
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Surname</th>
+                            <th>Last Name</th>
                             <th>First Name</th>
                             <th>Middle Name</th>
-                            <th>Suffix</th>
+                            <th>Extn. Name</th>
                             <th>Region</th>
                             <th>Province</th>
                             <th>City/Municipality</th>
@@ -345,113 +291,185 @@ $result = $conn->query($query);
                         </tr>
                     </thead>
 
-                    <tbody>
-                        <?php if ($result && $result->num_rows > 0): ?>
-                            <?php $count = 1; ?>
-                            <?php while ($row = $result->fetch_assoc()): ?>
-                                <?php
-                                    $birthday = '';
-
-                                    if (!empty($row['birthday_month']) && !empty($row['birthday_day']) && !empty($row['birthday_year'])) {
-                                        $birthday = $row['birthday_month'] . '/' . $row['birthday_day'] . '/' . $row['birthday_year'];
-                                    }
-
-                                    $queueNumber = $row['queue_number'] ?? '';
-                                    $workflowStatus = $row['workflow_status'] ?? '';
-                                    $displayStatus = displayStatus($workflowStatus);
-                                    $statusClass = statusClass($workflowStatus);
-
-                                    $hasQueue = !empty($queueNumber);
-                                ?>
-
-                                <tr>
-                                    <td class="row-number"><?php echo $count++; ?></td>
-                                    <td><?php echo e($row['last_name']); ?></td>
-                                    <td><?php echo e($row['first_name']); ?></td>
-                                    <td><?php echo e($row['middle_name']); ?></td>
-                                    <td><?php echo e($row['ext_name']); ?></td>
-                                    <td><?php echo e($row['region']); ?></td>
-                                    <td><?php echo e($row['province']); ?></td>
-                                    <td><?php echo e($row['city_municipality']); ?></td>
-                                    <td><?php echo e($row['barangay']); ?></td>
-                                    <td><?php echo e($row['contact_number']); ?></td>
-                                    <td><?php echo e($birthday); ?></td>
-                                    <td><?php echo e($row['age']); ?></td>
-                                    <td><?php echo e($row['sex']); ?></td>
-                                    <td><?php echo e($row['lgu']); ?></td>
-
-                                    <td class="queue-number">
-                                        <?php echo $hasQueue ? e($queueNumber) : 'Not generated'; ?>
-                                    </td>
-
-                                    <td>
-                                        <span class="status-badge <?php echo e($statusClass); ?>">
-                                            <?php echo e($displayStatus); ?>
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <div class="action-group">
-                                            <form method="POST" action="../api/generate_regular_qn.php" onsubmit="return confirm('Generate regular queue number for this beneficiary?');">
-                                                <input type="hidden" name="beneficiary_id" value="<?php echo e($row['id']); ?>">
-                                                <button type="submit" class="btn btn-regular" <?php echo $hasQueue ? 'disabled' : ''; ?>>
-                                                    Generate Regular QN
-                                                </button>
-                                            </form>
-
-                                            <form method="POST" action="../api/generate_priority_qn.php" onsubmit="return confirm('Generate priority queue number for this beneficiary?');">
-                                                <input type="hidden" name="beneficiary_id" value="<?php echo e($row['id']); ?>">
-                                                <button type="submit" class="btn btn-priority" <?php echo $hasQueue ? 'disabled' : ''; ?>>
-                                                    Generate Priority QN
-                                                </button>
-                                            </form>
-
-                                            <form method="POST" action="../api/regenerate_qn.php" onsubmit="return confirm('Regenerate queue number for this beneficiary?');">
-                                                <input type="hidden" name="beneficiary_id" value="<?php echo e($row['id']); ?>">
-                                                <button type="submit" class="btn btn-regenerate" <?php echo !$hasQueue ? 'disabled' : ''; ?>>
-                                                    Regenerate QN
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="17" class="empty-state">
-                                    No beneficiaries found.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
+                    <tbody id="beneficiaryRows">
+                        <tr>
+                            <td colspan="17" class="loading-text">Loading beneficiaries...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="footer-note">
-                Queue buttons are connected to API endpoints for Member 3:
-                generate_regular_qn.php, generate_priority_qn.php, and regenerate_qn.php.
+                <span>Auto-updates every 3 seconds.</span>
+                <span id="lastUpdated">Last updated: --</span>
             </div>
         </div>
     </div>
 
     <script>
         const searchInput = document.getElementById("searchInput");
-        const table = document.getElementById("verifierTable");
-        const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+        const tableBody = document.getElementById("beneficiaryRows");
+        const lastUpdated = document.getElementById("lastUpdated");
 
-        searchInput.addEventListener("input", function () {
+        let beneficiaries = [];
+
+        function escapeHTML(value) {
+            if (value === null || value === undefined) return "";
+
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        function displayStatus(status) {
+            if (status === "WAITING_STEP_2") return "WAITING: STEP 2";
+            if (status === "CALLED_STEP_2") return "CALLED: STEP 2";
+            if (status === "WAITING_STEP_3") return "WAITING: STEP 3";
+            if (status === "CALLED_STEP_3") return "CALLED: STEP 3";
+            if (status === "PAID") return "PAID";
+            if (status === "CANCELLED") return "CANCELLED";
+
+            return "NO QUEUE NUMBER";
+        }
+
+        function statusClass(status) {
+            if (status === "WAITING_STEP_2") return "status-step-2";
+            if (status === "CALLED_STEP_2") return "status-called-2";
+            if (status === "WAITING_STEP_3") return "status-step-3";
+            if (status === "CALLED_STEP_3") return "status-called-3";
+            if (status === "PAID") return "status-paid";
+            if (status === "CANCELLED") return "status-cancelled";
+
+            return "status-none";
+        }
+
+        function renderTable() {
             const searchValue = searchInput.value.toLowerCase();
 
-            for (let i = 0; i < rows.length; i++) {
-                const rowText = rows[i].innerText.toLowerCase();
+            const filtered = beneficiaries.filter(row => {
+                return Object.values(row).some(value =>
+                    String(value ?? "").toLowerCase().includes(searchValue)
+                );
+            });
 
-                if (rowText.includes(searchValue)) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="17" class="empty-state">No beneficiaries found.</td>
+                    </tr>
+                `;
+                return;
             }
-        });
+
+            let html = "";
+
+            filtered.forEach((row, index) => {
+                const hasQueue = row.queue_number && row.queue_number !== "";
+                const birthday = row.birthday_month && row.birthday_day && row.birthday_year
+                    ? `${row.birthday_month}/${row.birthday_day}/${row.birthday_year}`
+                    : "";
+
+                html += `
+                    <tr>
+                        <td class="row-number">${index + 1}</td>
+                        <td>${escapeHTML(row.last_name)}</td>
+                        <td>${escapeHTML(row.first_name)}</td>
+                        <td>${escapeHTML(row.middle_name)}</td>
+                        <td>${escapeHTML(row.ext_name)}</td>
+                        <td>${escapeHTML(row.region)}</td>
+                        <td>${escapeHTML(row.province)}</td>
+                        <td>${escapeHTML(row.city_municipality)}</td>
+                        <td>${escapeHTML(row.barangay)}</td>
+                        <td>${escapeHTML(row.contact_number)}</td>
+                        <td>${escapeHTML(birthday)}</td>
+                        <td>${escapeHTML(row.age)}</td>
+                        <td>${escapeHTML(row.sex)}</td>
+                        <td>${escapeHTML(row.lgu)}</td>
+
+                        <td class="queue-number">
+                            ${hasQueue ? escapeHTML(row.queue_number) : "Not generated"}
+                        </td>
+
+                        <td>
+                            <span class="status-badge ${statusClass(row.workflow_status)}">
+                                ${displayStatus(row.workflow_status)}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="action-group">
+                                <form method="POST" action="../api/generate_regular_qn.php" onsubmit="return confirm('Generate regular queue number for this beneficiary?');">
+                                    <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
+                                    <button type="submit" class="btn btn-regular" ${hasQueue ? "disabled" : ""}>
+                                        Generate Regular QN
+                                    </button>
+                                </form>
+
+                                <form method="POST" action="../api/generate_priority_qn.php" onsubmit="return confirm('Generate priority queue number for this beneficiary?');">
+                                    <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
+                                    <button type="submit" class="btn btn-priority" ${hasQueue ? "disabled" : ""}>
+                                        Generate Priority QN
+                                    </button>
+                                </form>
+
+                                <form method="POST" action="../api/regenerate_qn.php" onsubmit="return confirm('Regenerate queue number for this beneficiary?');">
+                                    <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
+                                    <button type="submit" class="btn btn-regenerate" ${!hasQueue ? "disabled" : ""}>
+                                        Regenerate QN
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
+        async function loadVerifierData() {
+            try {
+                const response = await fetch("../api/verifier_data.php");
+
+                if (!response.ok) {
+                    throw new Error("Failed to load verifier data.");
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="17" class="empty-state">${escapeHTML(data.message)}</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                beneficiaries = data.beneficiaries;
+                renderTable();
+
+                const now = new Date();
+                lastUpdated.innerText = "Last updated: " + now.toLocaleTimeString();
+
+            } catch (error) {
+                console.error(error);
+
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="17" class="empty-state">Failed to load data.</td>
+                    </tr>
+                `;
+            }
+        }
+
+        searchInput.addEventListener("input", renderTable);
+
+        loadVerifierData();
+        setInterval(loadVerifierData, 3000);
     </script>
 </body>
 </html>
