@@ -9,6 +9,7 @@ include('../auth/check.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/style.css">
 
     <style>
         * {
@@ -16,47 +17,34 @@ include('../auth/check.php');
         }
 
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
             background: #f3f6fb;
-            color: #1f2937;
         }
 
-        .app {
-            display: grid;
-            grid-template-columns: 1fr 220px;
-            min-height: 100vh;
-        }
-
-        .main {
-            min-width: 0;
-            overflow-x: hidden;
-        }
-
-        .sidebar {
-            height: 100vh;
-            position: sticky;
-            top: 0;
-        }
-
-        .page-wrapper {
+        .verifier-content {
             padding: 20px;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .page-header {
+        .page-header-card {
             background: white;
             border: 1px solid #d6dce8;
             border-radius: 10px;
             padding: 18px 20px;
             margin-bottom: 16px;
+            flex-shrink: 0;
         }
 
-        .page-header h1 {
+        .page-header-card h1 {
             margin: 0;
             font-size: 24px;
+            color: #1f2937;
         }
 
-        .page-header p {
+        .page-header-card p {
             margin: 6px 0 0;
             font-size: 14px;
             color: #6b7280;
@@ -69,6 +57,7 @@ include('../auth/check.php');
             gap: 12px;
             margin-bottom: 14px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .search-box {
@@ -78,6 +67,12 @@ include('../auth/check.php');
             border: 1px solid #cbd5e1;
             border-radius: 8px;
             font-size: 14px;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: #168fcb;
+            box-shadow: 0 0 0 3px rgba(22, 143, 203, 0.12);
         }
 
         .back-link {
@@ -92,26 +87,36 @@ include('../auth/check.php');
             gap: 6px;
         }
 
+        .back-link:hover {
+            background: #1f2937;
+        }
+
         .sheet-card {
             background: white;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
             overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .table-scroll {
             width: 100%;
-            overflow-x: auto;
+            overflow: auto;
+            flex: 1;
+            min-height: 0;
         }
 
-        table {
+        .verifier-table {
             width: 100%;
             min-width: 2050px;
             border-collapse: collapse;
             font-size: 13px;
         }
 
-        th {
+        .verifier-table th {
             background: #dbeafe;
             color: #111827;
             font-weight: bold;
@@ -119,9 +124,12 @@ include('../auth/check.php');
             border: 1px solid #b6c3d5;
             padding: 10px 8px;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 3;
         }
 
-        td {
+        .verifier-table td {
             border: 1px solid #d1d5db;
             padding: 9px 8px;
             white-space: nowrap;
@@ -129,11 +137,11 @@ include('../auth/check.php');
             background: white;
         }
 
-        tbody tr:nth-child(even) td {
+        .verifier-table tbody tr:nth-child(even) td {
             background: #f9fafb;
         }
 
-        tbody tr:hover td {
+        .verifier-table tbody tr:hover td {
             background: #eef6ff;
         }
 
@@ -203,7 +211,7 @@ include('../auth/check.php');
             margin: 0;
         }
 
-        .btn {
+        .action-btn {
             border: none;
             border-radius: 6px;
             padding: 8px 10px;
@@ -211,6 +219,7 @@ include('../auth/check.php');
             color: white;
             cursor: pointer;
             white-space: nowrap;
+            font-weight: 600;
         }
 
         .btn-regular {
@@ -225,12 +234,12 @@ include('../auth/check.php');
             background: #f97316;
         }
 
-        .btn:disabled {
+        .action-btn:disabled {
             background: #9ca3af;
             cursor: not-allowed;
         }
 
-        .btn:hover:not(:disabled) {
+        .action-btn:hover:not(:disabled) {
             opacity: 0.9;
         }
 
@@ -244,6 +253,7 @@ include('../auth/check.php');
             justify-content: space-between;
             gap: 10px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .empty-state,
@@ -255,13 +265,12 @@ include('../auth/check.php');
         }
 
         @media (max-width: 900px) {
-            .app {
-                grid-template-columns: 1fr;
+            .verifier-content {
+                overflow: visible;
             }
 
-            .sidebar {
-                position: relative;
-                height: auto;
+            .sheet-card {
+                min-height: 500px;
             }
         }
     </style>
@@ -272,8 +281,9 @@ include('../auth/check.php');
 <div class="app">
 
     <main class="main">
-        <div class="page-wrapper">
-            <div class="page-header">
+        <section class="verifier-content">
+
+            <div class="page-header-card">
                 <h1>Verifier Step 1</h1>
                 <p>Beneficiary verification and queue number generation screen</p>
             </div>
@@ -294,7 +304,7 @@ include('../auth/check.php');
 
             <div class="sheet-card">
                 <div class="table-scroll">
-                    <table id="verifierTable">
+                    <table id="verifierTable" class="verifier-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -330,7 +340,8 @@ include('../auth/check.php');
                     <span id="lastUpdated">Last updated: --</span>
                 </div>
             </div>
-        </div>
+
+        </section>
     </main>
 
     <?php include('sidebar.php'); ?>
@@ -435,21 +446,21 @@ include('../auth/check.php');
                         <div class="action-group">
                             <form method="POST" action="../api/generate_regular_qn.php" onsubmit="return confirm('Generate regular queue number for this beneficiary?');">
                                 <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
-                                <button type="submit" class="btn btn-regular" ${hasQueue ? "disabled" : ""}>
+                                <button type="submit" class="action-btn btn-regular" ${hasQueue ? "disabled" : ""}>
                                     Generate Regular QN
                                 </button>
                             </form>
 
                             <form method="POST" action="../api/generate_priority_qn.php" onsubmit="return confirm('Generate priority queue number for this beneficiary?');">
                                 <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
-                                <button type="submit" class="btn btn-priority" ${hasQueue ? "disabled" : ""}>
+                                <button type="submit" class="action-btn btn-priority" ${hasQueue ? "disabled" : ""}>
                                     Generate Priority QN
                                 </button>
                             </form>
 
                             <form method="POST" action="../api/regenerate_qn.php" onsubmit="return confirm('Regenerate queue number for this beneficiary?');">
                                 <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
-                                <button type="submit" class="btn btn-regenerate" ${!hasQueue ? "disabled" : ""}>
+                                <button type="submit" class="action-btn btn-regenerate" ${!hasQueue ? "disabled" : ""}>
                                     Regenerate QN
                                 </button>
                             </form>
