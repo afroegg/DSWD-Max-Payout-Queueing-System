@@ -145,6 +145,14 @@ include('../auth/check.php');
             background: #eef6ff;
         }
 
+        .row-priority td {
+            background: #fff7ed !important;
+        }
+
+        .row-priority:hover td {
+            background: #ffedd5 !important;
+        }
+
         .row-number {
             text-align: center;
             font-weight: bold;
@@ -154,6 +162,22 @@ include('../auth/check.php');
             font-weight: bold;
             color: #1d4ed8;
             text-align: center;
+        }
+
+        .priority-queue-number {
+            color: #c2410c !important;
+            font-weight: 800;
+        }
+
+        .priority-label {
+            display: inline-block;
+            background: #fed7aa;
+            color: #9a3412;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            margin-left: 6px;
         }
 
         .status-badge {
@@ -321,31 +345,6 @@ include('../auth/check.php');
             background: #dc2626;
         }
 
-        .row-priority td {
-    background: #fff7ed !important;
-}
-
-.row-priority:hover td {
-    background: #ffedd5 !important;
-}
-
-.priority-queue-number {
-    color: #c2410c !important;
-    font-weight: 800;
-}
-
-.priority-label {
-    display: inline-block;
-    background: #fed7aa;
-    color: #9a3412;
-    padding: 3px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    margin-left: 6px;
-}
-
-        
         .modal-cancel {
             width: 100%;
             height: 42px;
@@ -576,7 +575,7 @@ include('../auth/check.php');
                 : "";
 
             html += `
-                <tr>
+                <tr class="${rowClass}">
                     <td class="row-number">${index + 1}</td>
                     <td>${escapeHTML(row.last_name)}</td>
                     <td>${escapeHTML(row.first_name)}</td>
@@ -592,8 +591,8 @@ include('../auth/check.php');
                     <td>${escapeHTML(row.sex)}</td>
                     <td>${escapeHTML(row.lgu)}</td>
 
-                    <td class="queue-number">
-                        ${hasQueue ? escapeHTML(row.queue_number) : "Not generated"}
+                    <td class="${queueNumberClass}">
+                        ${hasQueue ? escapeHTML(row.queue_number) + priorityLabel : "Not generated"}
                     </td>
 
                     <td>
