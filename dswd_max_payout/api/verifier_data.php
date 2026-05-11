@@ -28,15 +28,15 @@ $query = "
         q.queue_type,
         q.workflow_status
     FROM beneficiaries b
-    LEFT JOIN queue_entries q 
-        ON q.beneficiary_id = b.id
-        AND q.transaction_date = CURDATE()
-        AND q.id = (
-            SELECT MAX(q2.id)
-            FROM queue_entries q2
-            WHERE q2.beneficiary_id = b.id
-              AND q2.transaction_date = CURDATE()
-        )
+  LEFT JOIN queue_entries q 
+    ON q.beneficiary_id = b.id
+    AND DATE(q.transaction_date) = CURDATE()
+    AND q.id = (
+        SELECT MAX(q2.id)
+        FROM queue_entries q2
+        WHERE q2.beneficiary_id = b.id
+          AND DATE(q2.transaction_date) = CURDATE()
+    )
     ORDER BY
         CASE 
             WHEN q.queue_type = 'priority'
