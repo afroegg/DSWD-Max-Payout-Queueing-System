@@ -85,18 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 0;
             font-size: 34px;
             letter-spacing: 2px;
-            color: #0b2e83;
+            color: #00008b;
             font-weight: 800;
         }
 
         .login-title h1 span {
-            color: #2563eb;
+            color: #00008b;
         }
 
         .login-title p {
             margin: 8px 0 0;
             font-size: 13px;
-            color: #4b5563;
+            color: #000000;
         }
 
         .login-form {
@@ -116,11 +116,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 14px;
             outline: none;
             background: #ffffff;
+            color: #000000;
+        }
+
+        .input-group input::placeholder {
+            color: #000000;
+            opacity: 0.65;
         }
 
         .input-group input:focus {
-            border-color: #0b2e83;
-            box-shadow: 0 0 0 3px rgba(11, 46, 131, 0.12);
+            border-color: #00008b;
+            box-shadow: 0 0 0 3px rgba(0, 0, 139, 0.12);
         }
 
         .login-btn {
@@ -154,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-note {
             margin-top: 20px;
             font-size: 12px;
-            color: #6b7280;
+            color: #000000;
             text-align: center;
         }
 
@@ -221,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: absolute;
             z-index: 2;
             bottom: 38px;
-            color: #2563eb;
+            color: #00008b;
             text-align: center;
         }
 
@@ -235,12 +241,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 5px 0 0;
             font-size: 13px;
             opacity: 0.92;
+            color: #00008b;
         }
 
         .small-accent {
             width: 52px;
             height: 4px;
-            background: #2563eb;
+            background: #00008b;
             border-radius: 999px;
             margin-top: 14px;
         }
