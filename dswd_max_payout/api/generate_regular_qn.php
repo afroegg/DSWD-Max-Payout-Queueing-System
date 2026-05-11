@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $beneficiary_id = intval($_POST['beneficiary_id'] ?? 0);
-$today = date('Y-m-d');
 
 if ($beneficiary_id <= 0) {
     echo "<script>
@@ -20,41 +19,51 @@ if ($beneficiary_id <= 0) {
     exit;
 }
 
-/* Check if beneficiary already has a queue today */
+/*
+    Check if beneficiary already has an active queue today.
+    Uses MySQL CURDATE() to avoid Render/PHP timezone mismatch.
+*/
 $check = $conn->prepare("
     SELECT id, queue_number, workflow_status
     FROM queue_entries
     WHERE beneficiary_id = ?
-      AND transaction_date = ?
-      AND workflow_status != 'CANCELLED'
+      AND DATE(transaction_date) = CURDATE()
+      AND (
+            workflow_status IS NULL
+            OR workflow_status != 'CANCELLED'
+          )
     ORDER BY id DESC
     LIMIT 1
 ");
-$check->bind_param("is", $beneficiary_id, $today);
+
+$check->bind_param("i", $beneficiary_id);
 $check->execute();
 $checkResult = $check->get_result();
 
 if ($checkResult && $checkResult->num_rows > 0) {
     $existing = $checkResult->fetch_assoc();
+    $existingQueue = addslashes($existing['queue_number']);
 
     echo "<script>
-        alert('This beneficiary already has a queue today. Queue No: " . $existing['queue_number'] . "');
+        alert('This beneficiary already has a queue today. Queue No: {$existingQueue}');
         window.location.href = '../staff/verifier.php';
     </script>";
     exit;
 }
 
-/* Generate next PAL queue number */
+/*
+    Generate next PAL queue number today.
+    Example: PAL-0001, PAL-0002, PAL-0003...
+*/
 $getLast = $conn->prepare("
-    SELECT queue_number
+    SELECT 
+        MAX(CAST(SUBSTRING(queue_number, 5) AS UNSIGNED)) AS last_number
     FROM queue_entries
-    WHERE transaction_date = ?
+    WHERE DATE(transaction_date) = CURDATE()
       AND queue_type = 'regular'
       AND queue_number LIKE 'PAL-%'
-    ORDER BY CAST(SUBSTRING(queue_number, 5) AS UNSIGNED) DESC
-    LIMIT 1
 ");
-$getLast->bind_param("s", $today);
+
 $getLast->execute();
 $lastResult = $getLast->get_result();
 
@@ -62,14 +71,18 @@ $nextNumber = 1;
 
 if ($lastResult && $lastResult->num_rows > 0) {
     $lastRow = $lastResult->fetch_assoc();
-    $lastQueue = $lastRow['queue_number'];
-    $lastNum = intval(str_replace('PAL-', '', $lastQueue));
-    $nextNumber = $lastNum + 1;
+
+    if ($lastRow['last_number'] !== null) {
+        $nextNumber = intval($lastRow['last_number']) + 1;
+    }
 }
 
 $queue_number = 'PAL-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
-/* Insert queue entry */
+/*
+    Insert regular queue.
+    transaction_date uses CURDATE() from MySQL.
+*/
 $insert = $conn->prepare("
     INSERT INTO queue_entries (
         queue_number,
@@ -87,7 +100,7 @@ $insert = $conn->prepare("
         ?,
         'regular',
         ?,
-        ?,
+        CURDATE(),
         'waiting',
         'WAITING_STEP_2',
         NULL,
@@ -97,7 +110,7 @@ $insert = $conn->prepare("
     )
 ");
 
-$insert->bind_param("sis", $queue_number, $beneficiary_id, $today);
+$insert->bind_param("si", $queue_number, $beneficiary_id);
 
 if ($insert->execute()) {
     echo "<script>
@@ -106,8 +119,10 @@ if ($insert->execute()) {
     </script>";
     exit;
 } else {
+    $error = addslashes($conn->error);
+
     echo "<script>
-        alert('Failed to generate regular queue number.');
+        alert('Failed to generate regular queue number. Error: {$error}');
         window.location.href = '../staff/verifier.php';
     </script>";
     exit;
