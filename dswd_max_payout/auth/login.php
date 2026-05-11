@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['fullname'] = !empty($user['fullname']) ? $user['fullname'] : $user['username'];
 
-            header("Location: ../staff/dashboard.php");
+            header("Location: ../staff/verifier.php");
             exit;
         } else {
             $error = "Invalid password.";
