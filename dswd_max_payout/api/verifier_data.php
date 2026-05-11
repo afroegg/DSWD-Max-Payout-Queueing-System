@@ -37,7 +37,20 @@ $query = "
             WHERE q2.beneficiary_id = b.id
               AND q2.transaction_date = CURDATE()
         )
-    ORDER BY 
+    ORDER BY
+        CASE 
+            WHEN q.queue_type = 'priority'
+             AND q.workflow_status != 'CANCELLED'
+            THEN 0
+            ELSE 1
+        END ASC,
+
+        CASE 
+            WHEN q.queue_type = 'priority'
+            THEN CAST(SUBSTRING(q.queue_number, 6) AS UNSIGNED)
+            ELSE 999999
+        END ASC,
+
         TRIM(b.last_name) ASC,
         TRIM(b.first_name) ASC,
         TRIM(b.middle_name) ASC,
