@@ -321,6 +321,31 @@ include('../auth/check.php');
             background: #dc2626;
         }
 
+        .row-priority td {
+    background: #fff7ed !important;
+}
+
+.row-priority:hover td {
+    background: #ffedd5 !important;
+}
+
+.priority-queue-number {
+    color: #c2410c !important;
+    font-weight: 800;
+}
+
+.priority-label {
+    display: inline-block;
+    background: #fed7aa;
+    color: #9a3412;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-left: 6px;
+}
+
+        
         .modal-cancel {
             width: 100%;
             height: 42px;
