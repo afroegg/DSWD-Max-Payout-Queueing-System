@@ -566,6 +566,10 @@ include('../auth/check.php');
 
         filtered.forEach((row, index) => {
             const hasQueue = row.queue_number && row.queue_number !== "";
+            const isPriority = row.queue_type === "priority";
+            const rowClass = isPriority ? "row-priority" : "";
+            const queueNumberClass = isPriority ? "queue-number priority-queue-number" : "queue-number";
+            const priorityLabel = isPriority ? `<span class="priority-label">PRIO</span>` : "";
 
             const birthday = row.birthday_month && row.birthday_day && row.birthday_year
                 ? `${row.birthday_month}/${row.birthday_day}/${row.birthday_year}`
