@@ -264,6 +264,79 @@ include('../auth/check.php');
             font-weight: bold;
         }
 
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            width: 360px;
+            max-width: 90%;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-box h2 {
+            margin: 0;
+            color: #111827;
+            font-size: 22px;
+        }
+
+        .modal-box p {
+            margin: 8px 0 20px;
+            color: #4b5563;
+            font-size: 14px;
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .modal-btn {
+            height: 46px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .pal-btn {
+            background: #16a34a;
+        }
+
+        .prio-btn {
+            background: #dc2626;
+        }
+
+        .modal-cancel {
+            width: 100%;
+            height: 42px;
+            border: none;
+            border-radius: 10px;
+            background: #e5e7eb;
+            color: #111827;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .modal-btn:hover,
+        .modal-cancel:hover {
+            opacity: 0.9;
+        }
+
         @media (max-width: 900px) {
             .verifier-content {
                 overflow: visible;
@@ -296,9 +369,9 @@ include('../auth/check.php');
                     placeholder="Search beneficiary..."
                 >
 
-                <a href="dashboard.php" class="back-link">
-                    <span class="material-icons" style="font-size:18px;">arrow_back</span>
-                    Back to Dashboard
+                <a href="verifier.php" class="back-link">
+                    <span class="material-icons" style="font-size:18px;">refresh</span>
+                    Refresh
                 </a>
             </div>
 
@@ -348,6 +421,32 @@ include('../auth/check.php');
 
 </div>
 
+<div id="regenerateModal" class="modal-overlay">
+    <div class="modal-box">
+        <h2>Choose Queue Type</h2>
+        <p>Select the new queue type for this beneficiary.</p>
+
+        <form id="regenerateForm" method="POST" action="../api/regenerate_qn.php">
+            <input type="hidden" name="beneficiary_id" id="regenBeneficiaryId">
+            <input type="hidden" name="new_queue_type" id="regenQueueType">
+
+            <div class="modal-actions">
+                <button type="button" class="modal-btn pal-btn" onclick="submitRegenerate('PAL')">
+                    PAL
+                </button>
+
+                <button type="button" class="modal-btn prio-btn" onclick="submitRegenerate('PRIO')">
+                    PRIO
+                </button>
+            </div>
+
+            <button type="button" class="modal-cancel" onclick="closeRegenerateModal()">
+                Cancel
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
     const searchInput = document.getElementById("searchInput");
     const tableBody = document.getElementById("beneficiaryRows");
@@ -387,6 +486,38 @@ include('../auth/check.php');
 
         return "status-none";
     }
+
+    function openRegenerateModal(beneficiaryId) {
+        document.getElementById("regenBeneficiaryId").value = beneficiaryId;
+        document.getElementById("regenQueueType").value = "";
+        document.getElementById("regenerateModal").style.display = "flex";
+    }
+
+    function closeRegenerateModal() {
+        document.getElementById("regenerateModal").style.display = "none";
+        document.getElementById("regenBeneficiaryId").value = "";
+        document.getElementById("regenQueueType").value = "";
+    }
+
+    function submitRegenerate(type) {
+        if (type !== "PAL" && type !== "PRIO") {
+            alert("Invalid queue type.");
+            return;
+        }
+
+        if (!confirm("Regenerate queue number as " + type + "?")) {
+            return;
+        }
+
+        document.getElementById("regenQueueType").value = type;
+        document.getElementById("regenerateForm").submit();
+    }
+
+    document.getElementById("regenerateModal").addEventListener("click", function(event) {
+        if (event.target === this) {
+            closeRegenerateModal();
+        }
+    });
 
     function renderTable() {
         const searchValue = searchInput.value.toLowerCase();
@@ -458,12 +589,14 @@ include('../auth/check.php');
                                 </button>
                             </form>
 
-                            <form method="POST" action="../api/regenerate_qn.php" onsubmit="return confirm('Regenerate queue number for this beneficiary?');">
-                                <input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}">
-                                <button type="submit" class="action-btn btn-regenerate" ${!hasQueue ? "disabled" : ""}>
-                                    Regenerate QN
-                                </button>
-                            </form>
+                            <button
+                                type="button"
+                                class="action-btn btn-regenerate"
+                                onclick="openRegenerateModal('${escapeHTML(row.id)}')"
+                                ${!hasQueue ? "disabled" : ""}
+                            >
+                                Regenerate QN
+                            </button>
                         </div>
                     </td>
                 </tr>
