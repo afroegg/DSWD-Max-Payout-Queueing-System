@@ -292,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-left">
         <div class="login-title">
             <h1>LOG <span>IN</span></h1>
-            <p>Hi! Log in to start managing the DSWD queueing system.</p>
+            <p>Log in to start managing the DSWD queueing system.</p>
             <div class="small-accent"></div>
         </div>
 
