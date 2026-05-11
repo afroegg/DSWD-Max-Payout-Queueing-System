@@ -6,6 +6,14 @@ $current = basename($_SERVER['PHP_SELF']);
     <div class="logo">ADMIN</div>
 
     <nav>
+        <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
+            <span class="material-icons">fact_check</span>
+            Verifier Step 1
+        </a>
+
+        <!-- Temporarily hidden until Step 2 and Step 3 pages are ready -->
+
+        <!--
         <a href="dashboard.php" class="<?php echo $current === 'dashboard.php' ? 'active' : ''; ?>">
             <span class="material-icons">dashboard</span>
             Dashboard
@@ -15,11 +23,7 @@ $current = basename($_SERVER['PHP_SELF']);
             <span class="material-icons">person_add</span>
             Register
         </a>
-
-        <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
-            <span class="material-icons">fact_check</span>
-            Verifier Step 1
-        </a>
+        -->
     </nav>
 
     <div class="sidebar-footer">
