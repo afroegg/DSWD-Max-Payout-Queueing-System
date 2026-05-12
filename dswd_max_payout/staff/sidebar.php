@@ -8,7 +8,7 @@ $current = basename($_SERVER['PHP_SELF']);
     <nav>
         <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
             <span class="material-icons">fact_check</span>
-            Verifier Step 1
+            Verifier [Step 1]
         </a>
 
         <!-- Temporarily hidden until Step 2 and Step 3 pages are ready -->
