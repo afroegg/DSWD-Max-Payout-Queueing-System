@@ -381,7 +381,7 @@ include('../auth/check.php');
         <section class="verifier-content">
 
             <div class="page-header-card">
-                <h1>Verifier Step 1</h1>
+                <h1>Verifier [Step 1]</h1>
                 <p>Beneficiary verification and queue number generation screen</p>
             </div>
 
@@ -405,10 +405,10 @@ include('../auth/check.php');
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Last Name</th>
+                                <th>Surname</th>
                                 <th>First Name</th>
-                                <th>Middle Name</th>
-                                <th>Extn. Name</th>
+                                <th>Middle Initial</th>
+                                <th>Suffix</th>
                                 <th>Region</th>
                                 <th>Province</th>
                                 <th>City/Municipality</th>
@@ -418,7 +418,7 @@ include('../auth/check.php');
                                 <th>Age</th>
                                 <th>Sex</th>
                                 <th>LGU</th>
-                                <th>Generated Queue Number</th>
+                                <th>Generated QN</th>
                                 <th>Real-Time Status</th>
                                 <th>Actions</th>
                             </tr>
