@@ -135,6 +135,7 @@ include('../auth/check.php');
             white-space: nowrap;
             vertical-align: middle;
             background: white;
+            text-align: center;
         }
 
         .verifier-table tbody tr:nth-child(even) td {
