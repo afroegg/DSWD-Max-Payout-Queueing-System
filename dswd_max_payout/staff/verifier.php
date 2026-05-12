@@ -414,7 +414,7 @@ include('../auth/check.php');
                                 <th>City/Municipality</th>
                                 <th>Barangay</th>
                                 <th>Contact No.</th>
-                                <th>Birthday</th>
+                                <th>Birthday(mm/dd/yyyy)</th>
                                 <th>Age</th>
                                 <th>Sex</th>
                                 <th>LGU</th>
