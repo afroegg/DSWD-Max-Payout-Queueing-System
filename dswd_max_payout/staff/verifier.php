@@ -26,9 +26,17 @@ include('../auth/check.php');
 </div>
 <div id="regenerateModal" class="modal-overlay"><div class="modal-box"><h2>Choose Queue Type</h2><p>Select the new queue type for this beneficiary.</p><form id="regenerateForm" method="POST" action="../api/regenerate_qn.php"><input type="hidden" name="beneficiary_id" id="regenBeneficiaryId"><input type="hidden" name="new_queue_type" id="regenQueueType"><div class="modal-actions"><button type="button" class="modal-btn pal-btn" onclick="submitRegenerate('PAL')">PAL</button><button type="button" class="modal-btn prio-btn" onclick="submitRegenerate('PRIO')">PRIO</button></div><button type="button" class="modal-cancel" onclick="closeRegenerateModal()">Cancel</button></form></div></div>
 <script>
-const searchInput=document.getElementById('searchInput');const tableBody=document.getElementById('beneficiaryRows');const lastUpdated=document.getElementById('lastUpdated');let beneficiaries=[];
+const searchInput=document.getElementById('searchInput');
+
+  const tableBody=document.getElementById('beneficiaryRows');
+  const lastUpdated=document.getElementById('lastUpdated');
+  let beneficiaries=[];
+  
 function escapeHTML(value){if(value===null||value===undefined)return'';return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
-function displayStatus(status){if(status==='WAITING_STEP_2')return'WAITING: STEP 2';if(status==='CALLED_STEP_2')return'CALLED: STEP 2';if(status==='WAITING_STEP_3')return'WAITING: STEP 3';if(status==='CALLED_STEP_3')return'CALLED: STEP 3';if(status==='PAID')return'PAID';return'NO QUEUE NUMBER'}
+  
+function displayStatus(status){if(status==='WAITING_STEP_2')
+  return'WAITING: STEP 2';if(status==='CALLED_STEP_2')
+  return'CALLED: STEP 2';if(status==='WAITING_STEP_3')return'WAITING: STEP 3';if(status==='CALLED_STEP_3')return'CALLED: STEP 3';if(status==='PAID')return'PAID';return'NO QUEUE NUMBER'}
 function statusClass(status){if(status==='WAITING_STEP_2')return'status-step-2';if(status==='CALLED_STEP_2')return'status-called-2';if(status==='WAITING_STEP_3')return'status-step-3';if(status==='CALLED_STEP_3')return'status-called-3';if(status==='PAID')return'status-paid';return'status-none'}
 function eligibilityClass(status){if(status==='Eligible')return'elig-eligible';if(status==='Not Eligible')return'elig-not';return'elig-pending'}
 function openRegenerateModal(id){document.getElementById('regenBeneficiaryId').value=id;document.getElementById('regenQueueType').value='';document.getElementById('regenerateModal').style.display='flex'}
