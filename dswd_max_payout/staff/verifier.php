@@ -17,7 +17,7 @@ include('../auth/check.php');
 <div class="app">
 <main class="main">
 <section class="verifier-content">
-<div class="page-header-card"><h1>Verifier [Step 1]</h1><p>Fill eligibility form first, then generate PAL or PRIO queue number.</p></div>
+<div class="page-header-card"><h1>VERIFIER [Step 1]</h1><p>Fill eligibility form first, then generate PAL or PRIO queue number.</p></div>
 <div class="toolbar"><input type="text" id="searchInput" class="search-box" placeholder="Search beneficiary..."><a href="verifier.php" class="back-link"><span class="material-icons" style="font-size:18px;">refresh</span>Refresh</a></div>
 <div class="sheet-card"><div class="table-scroll"><table id="verifierTable" class="verifier-table"><thead><tr><th>#</th><th>Surname</th><th>First Name</th><th>Middle Initial</th><th>Suffix</th><th>Region</th><th>Province</th><th>City/Municipality</th><th>Barangay</th><th>Contact No.</th><th>Birthday</th><th>Age</th><th>Sex</th><th>LGU</th><th>Eligibility</th><th>Generated QN</th><th>Real-Time Status</th><th>Actions</th></tr></thead><tbody id="beneficiaryRows"><tr><td colspan="18" class="loading-text">Loading beneficiaries...</td></tr></tbody></table></div><div class="footer-note"><span>Auto-updates every 3 seconds.</span><span id="lastUpdated">Last updated: --</span></div></div>
 </section>
