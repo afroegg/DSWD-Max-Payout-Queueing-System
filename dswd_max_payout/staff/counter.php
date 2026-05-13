@@ -387,7 +387,7 @@ function clientName($entry) {
             <div class="counter-header">
                 <div class="header-controls">
                     <div>
-                        <h1 class="counter-title">COUNTER LIST</h1>
+                        <h1 class="counter-title">COUNTER LIST [Step 2 & 3]</h1>
                         <p class="counter-subtitle">Select which counter will call each beneficiary for Step 2 Assessment or Step 3 Payout.</p>
                     </div>
                     <a href="verifier.php" class="back-link">
