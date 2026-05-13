@@ -127,8 +127,8 @@ include('../auth/check.php');
 
 <div class="screen">
     <section class="panel assessment">
-        <div class="title">STEP 2</div>
-        <div class="subtitle">ASSESSMENT / GIS INTERVIEW</div>
+        <div class="title">ASSESSMENT</div>
+        <div class="subtitle"></div>
 
         <div class="header">
             <div>Queueing Number</div>
@@ -139,8 +139,8 @@ include('../auth/check.php');
     </section>
 
     <section class="panel release">
-        <div class="title">STEP 3</div>
-        <div class="subtitle">PAYOUT / RELEASE</div>
+        <div class="title">PAYOUT / RELEASE</div>
+        <div class="subtitle"></div>
 
         <div class="header">
             <div>Queueing Number</div>
