@@ -2,17 +2,14 @@
 include('../auth/check.php');
 include('../config/db.php');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../staff/verifier.php');
-    exit;
-}
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ../staff/counter.php'); exit; }
 
+$queue_id = intval($_POST['queue_id'] ?? 0);
 $beneficiary_id = intval($_POST['beneficiary_id'] ?? 0);
-if ($beneficiary_id <= 0) {
-    header('Location: ../staff/verifier.php');
-    exit;
-}
+if ($queue_id <= 0 || $beneficiary_id <= 0) { header('Location: ../staff/counter.php'); exit; }
 
+$action = $_POST['action'] ?? 'save';
+$form_locked = ($action === 'approve') ? 1 : 0;
 $id_type_presented = trim($_POST['id_type_presented'] ?? '');
 $id_reference_note = trim($_POST['id_reference_note'] ?? '');
 $matches_masterlist = trim($_POST['matches_masterlist'] ?? 'No');
@@ -26,36 +23,46 @@ $supporting_documents = trim($_POST['supporting_documents'] ?? '');
 $already_received_payout = trim($_POST['already_received_payout'] ?? 'No');
 $receiving_other_assistance = trim($_POST['receiving_other_assistance'] ?? 'No');
 $eligibility_status = trim($_POST['eligibility_status'] ?? 'Pending Review');
+$approved_cash_amount = ($_POST['approved_cash_amount'] ?? '') !== '' ? floatval($_POST['approved_cash_amount']) : null;
 $remarks = trim($_POST['remarks'] ?? '');
 $verified_by = intval($_SESSION['user_id'] ?? 0);
 
-if (!in_array($matches_masterlist, ['Yes', 'No'])) $matches_masterlist = 'No';
-if (!in_array($already_received_payout, ['Yes', 'No'])) $already_received_payout = 'No';
-if (!in_array($receiving_other_assistance, ['Yes', 'No'])) $receiving_other_assistance = 'No';
-if (!in_array($eligibility_status, ['Eligible', 'Not Eligible', 'Pending Review'])) $eligibility_status = 'Pending Review';
+if (!in_array($matches_masterlist, ['Yes','No'])) $matches_masterlist = 'No';
+if (!in_array($already_received_payout, ['Yes','No'])) $already_received_payout = 'No';
+if (!in_array($receiving_other_assistance, ['Yes','No'])) $receiving_other_assistance = 'No';
+if (!in_array($eligibility_status, ['Eligible','Not Eligible','Pending Review'])) $eligibility_status = 'Pending Review';
 
-$check = $conn->prepare('SELECT id FROM eligibility_forms WHERE beneficiary_id = ? LIMIT 1');
-$check->bind_param('i', $beneficiary_id);
+if ($form_locked === 1 && ($eligibility_status !== 'Eligible' || $approved_cash_amount === null || $approved_cash_amount <= 0)) {
+    echo "<script>alert('To approve and lock, set decision to Eligible and enter a valid cash amount.'); window.location.href='../staff/eligibility_form.php?queue_id={$queue_id}';</script>";
+    exit;
+}
+
+$check = $conn->prepare('SELECT id, form_locked FROM eligibility_forms WHERE queue_entry_id = ? OR beneficiary_id = ? ORDER BY id DESC LIMIT 1');
+$check->bind_param('ii', $queue_id, $beneficiary_id);
 $check->execute();
 $result = $check->get_result();
 
 if ($result && $result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    if (intval($row['form_locked']) === 1) {
+        echo "<script>alert('This GIS form is already approved and locked.'); window.location.href='../staff/eligibility_form.php?queue_id={$queue_id}';</script>";
+        exit;
+    }
     $form_id = intval($row['id']);
-
-    $stmt = $conn->prepare("UPDATE eligibility_forms SET id_type_presented=?, id_reference_note=?, matches_masterlist=?, household_members=?, dependents=?, monthly_income=?, income_source=?, beneficiary_type=?, assistance_reason=?, supporting_documents=?, already_received_payout=?, receiving_other_assistance=?, eligibility_status=?, remarks=?, verified_by=?, verified_at=NOW() WHERE id=?");
-    $stmt->bind_param('sssiidssssssssii', $id_type_presented, $id_reference_note, $matches_masterlist, $household_members, $dependents, $monthly_income, $income_source, $beneficiary_type, $assistance_reason, $supporting_documents, $already_received_payout, $receiving_other_assistance, $eligibility_status, $remarks, $verified_by, $form_id);
+    $stmt = $conn->prepare("UPDATE eligibility_forms SET queue_entry_id=?, id_type_presented=?, id_reference_note=?, matches_masterlist=?, household_members=?, dependents=?, monthly_income=?, income_source=?, beneficiary_type=?, assistance_reason=?, supporting_documents=?, already_received_payout=?, receiving_other_assistance=?, eligibility_status=?, approved_cash_amount=?, form_locked=?, approved_at=IF(?=1,NOW(),approved_at), remarks=?, verified_by=?, verified_at=NOW() WHERE id=?");
+    $stmt->bind_param('isssiidsssssssdiiisii', $queue_id, $id_type_presented, $id_reference_note, $matches_masterlist, $household_members, $dependents, $monthly_income, $income_source, $beneficiary_type, $assistance_reason, $supporting_documents, $already_received_payout, $receiving_other_assistance, $eligibility_status, $approved_cash_amount, $form_locked, $form_locked, $remarks, $verified_by, $form_id);
 } else {
-    $stmt = $conn->prepare("INSERT INTO eligibility_forms (beneficiary_id, id_type_presented, id_reference_note, matches_masterlist, household_members, dependents, monthly_income, income_source, beneficiary_type, assistance_reason, supporting_documents, already_received_payout, receiving_other_assistance, eligibility_status, remarks, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param('isssiidssssssssi', $beneficiary_id, $id_type_presented, $id_reference_note, $matches_masterlist, $household_members, $dependents, $monthly_income, $income_source, $beneficiary_type, $assistance_reason, $supporting_documents, $already_received_payout, $receiving_other_assistance, $eligibility_status, $remarks, $verified_by);
+    $stmt = $conn->prepare("INSERT INTO eligibility_forms (beneficiary_id, queue_entry_id, id_type_presented, id_reference_note, matches_masterlist, household_members, dependents, monthly_income, income_source, beneficiary_type, assistance_reason, supporting_documents, already_received_payout, receiving_other_assistance, eligibility_status, approved_cash_amount, form_locked, approved_at, remarks, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(?=1,NOW(),NULL), ?, ?, NOW())");
+    $stmt->bind_param('iisssiidsssssssdiiisi', $beneficiary_id, $queue_id, $id_type_presented, $id_reference_note, $matches_masterlist, $household_members, $dependents, $monthly_income, $income_source, $beneficiary_type, $assistance_reason, $supporting_documents, $already_received_payout, $receiving_other_assistance, $eligibility_status, $approved_cash_amount, $form_locked, $form_locked, $remarks, $verified_by);
 }
 
 if ($stmt->execute()) {
-    echo "<script>alert('Eligibility form saved successfully.'); window.location.href='../staff/verifier.php';</script>";
+    $msg = $form_locked ? 'GIS form approved and locked.' : 'GIS form draft saved.';
+    echo "<script>alert('{$msg}'); window.location.href='../staff/counter.php';</script>";
     exit;
 }
 
 $error = addslashes($conn->error);
-echo "<script>alert('Failed to save eligibility form. Error: {$error}'); window.location.href='../staff/eligibility_form.php?beneficiary_id={$beneficiary_id}';</script>";
+echo "<script>alert('Failed to save GIS form. Error: {$error}'); window.location.href='../staff/eligibility_form.php?queue_id={$queue_id}';</script>";
 exit;
 ?>
