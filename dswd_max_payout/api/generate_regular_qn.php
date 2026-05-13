@@ -16,22 +16,6 @@ if ($beneficiary_id <= 0) {
     exit;
 }
 
-$eligibility = $conn->prepare("SELECT eligibility_status FROM eligibility_forms WHERE beneficiary_id = ? LIMIT 1");
-$eligibility->bind_param("i", $beneficiary_id);
-$eligibility->execute();
-$eligibilityResult = $eligibility->get_result();
-
-if (!$eligibilityResult || $eligibilityResult->num_rows === 0) {
-    echo "<script>alert('Complete the eligibility form first before generating a queue number.'); window.location.href = '../staff/eligibility_form.php?beneficiary_id={$beneficiary_id}';</script>";
-    exit;
-}
-
-$eligibilityRow = $eligibilityResult->fetch_assoc();
-if ($eligibilityRow['eligibility_status'] !== 'Eligible') {
-    echo "<script>alert('This beneficiary is not marked Eligible yet.'); window.location.href = '../staff/eligibility_form.php?beneficiary_id={$beneficiary_id}';</script>";
-    exit;
-}
-
 $check = $conn->prepare("SELECT id, queue_number FROM queue_entries WHERE beneficiary_id = ? AND DATE(transaction_date) = CURDATE() AND (workflow_status IS NULL OR workflow_status != 'CANCELLED') ORDER BY id DESC LIMIT 1");
 $check->bind_param("i", $beneficiary_id);
 $check->execute();
