@@ -19,9 +19,13 @@ $query = $conn->prepare("
         b.first_name,
         b.middle_name,
         b.last_name,
-        b.ext_name
+        b.ext_name,
+        e.form_locked,
+        e.eligibility_status,
+        e.approved_cash_amount
     FROM queue_entries q
     INNER JOIN beneficiaries b ON b.id = q.beneficiary_id
+    LEFT JOIN eligibility_forms e ON e.queue_entry_id = q.id
     WHERE DATE(q.transaction_date) = CURDATE()
       AND q.workflow_status IN (
             'WAITING_STEP_2',
@@ -171,7 +175,7 @@ function clientName($entry) {
         }
 
         .counter-table td:nth-child(1) {
-            width: 14%;
+            width: 13%;
             font-weight: 800;
             font-size: 16px;
             color: #0f2f56;
@@ -179,16 +183,16 @@ function clientName($entry) {
         }
 
         .counter-table td:nth-child(2) {
-            width: 26%;
+            width: 24%;
             font-size: 15px;
         }
 
         .counter-table td:nth-child(3) {
-            width: 18%;
+            width: 23%;
         }
 
         .counter-table td:nth-child(4) {
-            width: 42%;
+            width: 40%;
             text-align: right;
         }
 
@@ -218,6 +222,27 @@ function clientName($entry) {
             font-size: 12px;
             font-weight: 800;
             margin-left: 6px;
+        }
+
+        .gis-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            margin-top: 6px;
+        }
+
+        .gis-locked {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .gis-draft {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         .action-buttons {
@@ -270,6 +295,11 @@ function clientName($entry) {
 
         .action-btn.call {
             background: #10b981;
+            color: white;
+        }
+
+        .action-btn.gis {
+            background: #2563eb;
             color: white;
         }
 
@@ -370,7 +400,7 @@ function clientName($entry) {
 
         @media (max-width: 1100px) {
             .counter-table {
-                min-width: 1100px;
+                min-width: 1150px;
             }
 
             .table-wrap {
@@ -388,7 +418,7 @@ function clientName($entry) {
                 <div class="header-controls">
                     <div>
                         <h1 class="counter-title">COUNTER LIST [Step 2 & 3]</h1>
-                        <p class="counter-subtitle">Select which counter will call each beneficiary for Step 2 Assessment or Step 3 Payout.</p>
+                        <p class="counter-subtitle">Call beneficiary, encode GIS form, approve assistance, then mark assessed or paid.</p>
                     </div>
                     <a href="verifier.php" class="back-link">
                         <span class="material-icons">arrow_back</span>
@@ -403,7 +433,7 @@ function clientName($entry) {
                         <tr>
                             <th>Queuing Number</th>
                             <th>Name of Client</th>
-                            <th>Status</th>
+                            <th>Status / GIS</th>
                             <th>Action Buttons</th>
                         </tr>
                     </thead>
@@ -421,8 +451,11 @@ function clientName($entry) {
                             <?php foreach ($queue_entries as $entry): ?>
                                 <?php
                                     $workflowStatus = $entry['workflow_status'];
-                                    $isCalled = ($workflowStatus === 'CALLED_STEP_2' || $workflowStatus === 'CALLED_STEP_3');
+                                    $isCalledStep2 = ($workflowStatus === 'CALLED_STEP_2');
+                                    $isCalledStep3 = ($workflowStatus === 'CALLED_STEP_3');
+                                    $isCalled = ($isCalledStep2 || $isCalledStep3);
                                     $isPriority = ($entry['queue_type'] === 'priority');
+                                    $isGISLocked = intval($entry['form_locked'] ?? 0) === 1 && ($entry['eligibility_status'] ?? '') === 'Eligible' && floatval($entry['approved_cash_amount'] ?? 0) > 0;
 
                                     $rowClass = '';
                                     if ($isCalled) {
@@ -432,10 +465,11 @@ function clientName($entry) {
                                     }
 
                                     $canCall = ($workflowStatus === 'WAITING_STEP_2' || $workflowStatus === 'WAITING_STEP_3');
+                                    $canOpenGIS = $isCalledStep2;
                                     $canRevert = ($workflowStatus === 'CALLED_STEP_2' || $workflowStatus === 'WAITING_STEP_3' || $workflowStatus === 'CALLED_STEP_3');
-                                    $canAssess = ($workflowStatus === 'CALLED_STEP_2');
-                                    $canPay = ($workflowStatus === 'CALLED_STEP_3');
-                                    $canAssessPay = ($workflowStatus === 'CALLED_STEP_2' || $workflowStatus === 'CALLED_STEP_3');
+                                    $canAssess = ($workflowStatus === 'CALLED_STEP_2' && $isGISLocked);
+                                    $canPay = ($workflowStatus === 'CALLED_STEP_3' && $isGISLocked);
+                                    $canAssessPay = (($workflowStatus === 'CALLED_STEP_2' || $workflowStatus === 'CALLED_STEP_3') && $isGISLocked);
                                     $selectedCounter = intval($entry['counter_number'] ?? 1);
                                     if ($selectedCounter <= 0) {
                                         $selectedCounter = 1;
@@ -463,6 +497,17 @@ function clientName($entry) {
                                                 Counter <?php echo intval($entry['counter_number']); ?>
                                             </span>
                                         <?php endif; ?>
+
+                                        <br>
+                                        <?php if ($isGISLocked): ?>
+                                            <span class="gis-badge gis-locked">
+                                                GIS Locked: ₱<?php echo number_format(floatval($entry['approved_cash_amount']), 2); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="gis-badge gis-draft">
+                                                GIS Not Locked
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
 
                                     <td>
@@ -481,6 +526,11 @@ function clientName($entry) {
                                                     Call
                                                 </button>
                                             </form>
+
+                                            <a href="eligibility_form.php?queue_id=<?php echo intval($entry['id']); ?>" class="action-btn gis" <?php echo !$canOpenGIS ? 'style="pointer-events:none;opacity:0.45;"' : ''; ?>>
+                                                <span class="material-icons" style="font-size:16px;">description</span>
+                                                GIS Form
+                                            </a>
 
                                             <form method="POST" action="../api/revert_queue.php" class="action-form" onsubmit="return confirm('Revert this queue entry?');">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
