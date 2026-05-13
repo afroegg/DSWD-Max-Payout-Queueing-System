@@ -4,12 +4,6 @@ include('../config/db.php');
 
 date_default_timezone_set('Asia/Manila');
 
-$counter_number = intval($_GET['counter'] ?? 1);
-
-if ($counter_number <= 0) {
-    $counter_number = 1;
-}
-
 $query = $conn->prepare("
     SELECT
         q.id,
@@ -37,8 +31,8 @@ $query = $conn->prepare("
           )
     ORDER BY
         CASE
-            WHEN q.workflow_status = 'CALLED_STEP_2' AND q.counter_number = ? THEN 0
-            WHEN q.workflow_status = 'CALLED_STEP_3' AND q.counter_number = ? THEN 1
+            WHEN q.workflow_status = 'CALLED_STEP_2' THEN 0
+            WHEN q.workflow_status = 'CALLED_STEP_3' THEN 1
             WHEN q.queue_type = 'priority' THEN 2
             ELSE 3
         END ASC,
@@ -55,7 +49,6 @@ $query = $conn->prepare("
         q.id ASC
 ");
 
-$query->bind_param("ii", $counter_number, $counter_number);
 $query->execute();
 $result = $query->get_result();
 
@@ -101,7 +94,7 @@ function clientName($entry) {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Counter <?php echo htmlspecialchars($counter_number); ?></title>
+    <title>Counter List</title>
     <link rel="stylesheet" href="../assets/style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -168,16 +161,8 @@ function clientName($entry) {
             border-left: 4px solid #f59e0b;
         }
 
-        .counter-table tbody tr.row-calling:hover {
-            background: #fef08a;
-        }
-
         .counter-table tbody tr.row-priority {
             background: #fff7ed;
-        }
-
-        .counter-table tbody tr.row-priority:hover {
-            background: #ffedd5;
         }
 
         .counter-table td {
@@ -186,7 +171,7 @@ function clientName($entry) {
         }
 
         .counter-table td:nth-child(1) {
-            width: 17%;
+            width: 14%;
             font-weight: 800;
             font-size: 16px;
             color: #0f2f56;
@@ -194,12 +179,16 @@ function clientName($entry) {
         }
 
         .counter-table td:nth-child(2) {
-            width: 38%;
+            width: 26%;
             font-size: 15px;
         }
 
         .counter-table td:nth-child(3) {
-            width: 45%;
+            width: 18%;
+        }
+
+        .counter-table td:nth-child(4) {
+            width: 42%;
             text-align: right;
         }
 
@@ -218,11 +207,43 @@ function clientName($entry) {
             font-weight: 800;
         }
 
+        .assigned-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #ecfeff;
+            color: #155e75;
+            font-size: 12px;
+            font-weight: 800;
+            margin-left: 6px;
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
             justify-content: flex-end;
+            align-items: center;
+        }
+
+        .action-form {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+            margin: 0;
+        }
+
+        .counter-select {
+            min-height: 34px;
+            padding: 7px 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 12px;
+            font-weight: 700;
+            outline: none;
+            background: white;
         }
 
         .action-btn {
@@ -230,7 +251,7 @@ function clientName($entry) {
             align-items: center;
             justify-content: center;
             gap: 4px;
-            padding: 8px 14px;
+            padding: 8px 12px;
             font-weight: 700;
             font-size: 12px;
             border: none;
@@ -272,7 +293,8 @@ function clientName($entry) {
             color: white;
         }
 
-        .action-btn:disabled {
+        .action-btn:disabled,
+        .counter-select:disabled {
             opacity: 0.45;
             cursor: not-allowed;
             transform: none;
@@ -303,7 +325,6 @@ function clientName($entry) {
             font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
-            margin-left: 8px;
             white-space: nowrap;
         }
 
@@ -327,11 +348,6 @@ function clientName($entry) {
             color: #78350f;
         }
 
-        .status-badge.paid {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
         .header-controls {
             display: flex;
             justify-content: space-between;
@@ -352,9 +368,9 @@ function clientName($entry) {
             opacity: 0.9;
         }
 
-        @media (max-width: 1000px) {
+        @media (max-width: 1100px) {
             .counter-table {
-                min-width: 950px;
+                min-width: 1100px;
             }
 
             .table-wrap {
@@ -371,8 +387,8 @@ function clientName($entry) {
             <div class="counter-header">
                 <div class="header-controls">
                     <div>
-                        <h1 class="counter-title">COUNTER <?php echo htmlspecialchars($counter_number); ?></h1>
-                        <p class="counter-subtitle">Step 2 Assessment and Step 3 Payout Queue</p>
+                        <h1 class="counter-title">COUNTER LIST</h1>
+                        <p class="counter-subtitle">Select which counter will call each beneficiary for Step 2 Assessment or Step 3 Payout.</p>
                     </div>
                     <a href="verifier.php" class="back-link">
                         <span class="material-icons">arrow_back</span>
@@ -387,16 +403,17 @@ function clientName($entry) {
                         <tr>
                             <th>Queuing Number</th>
                             <th>Name of Client</th>
+                            <th>Status</th>
                             <th>Action Buttons</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($queue_entries) === 0): ?>
                             <tr>
-                                <td colspan="3">
+                                <td colspan="4">
                                     <div class="empty-state">
                                         <div class="empty-state-icon">📭</div>
-                                        <p>No active queues for this counter.</p>
+                                        <p>No active queues for Step 2 or Step 3.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -419,6 +436,10 @@ function clientName($entry) {
                                     $canAssess = ($workflowStatus === 'CALLED_STEP_2');
                                     $canPay = ($workflowStatus === 'CALLED_STEP_3');
                                     $canAssessPay = ($workflowStatus === 'CALLED_STEP_2' || $workflowStatus === 'CALLED_STEP_3');
+                                    $selectedCounter = intval($entry['counter_number'] ?? 1);
+                                    if ($selectedCounter <= 0) {
+                                        $selectedCounter = 1;
+                                    }
                                 ?>
                                 <tr class="<?php echo $rowClass; ?>">
                                     <td class="<?php echo $isPriority ? 'queue-priority' : ''; ?>">
@@ -430,52 +451,67 @@ function clientName($entry) {
 
                                     <td>
                                         <?php echo htmlspecialchars(clientName($entry)); ?>
+                                    </td>
+
+                                    <td>
                                         <span class="status-badge <?php echo statusClass($workflowStatus); ?>">
                                             <?php echo htmlspecialchars(displayStatus($workflowStatus)); ?>
                                         </span>
+
+                                        <?php if ($isCalled): ?>
+                                            <span class="assigned-counter">
+                                                Counter <?php echo intval($entry['counter_number']); ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
 
                                     <td>
                                         <div class="action-buttons">
-                                            <form method="POST" action="../api/call_queue.php" style="margin:0;display:inline;">
+                                            <form method="POST" action="../api/call_queue.php" class="action-form">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
-                                                <input type="hidden" name="counter_number" value="<?php echo intval($counter_number); ?>">
+                                                <select name="counter_number" class="counter-select" <?php echo !$canCall ? 'disabled' : ''; ?>>
+                                                    <?php for ($i = 1; $i <= 10; $i++): ?>
+                                                        <option value="<?php echo $i; ?>" <?php echo $selectedCounter === $i ? 'selected' : ''; ?>>
+                                                            Counter <?php echo $i; ?>
+                                                        </option>
+                                                    <?php endfor; ?>
+                                                </select>
                                                 <button type="submit" class="action-btn call" <?php echo !$canCall ? 'disabled' : ''; ?>>
                                                     <span class="material-icons" style="font-size:16px;">campaign</span>
                                                     Call
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="../api/revert_queue.php" style="margin:0;display:inline;" onsubmit="return confirm('Revert this queue entry?');">
+                                            <form method="POST" action="../api/revert_queue.php" class="action-form" onsubmit="return confirm('Revert this queue entry?');">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
-                                                <input type="hidden" name="counter_number" value="<?php echo intval($counter_number); ?>">
+                                                <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
                                                 <button type="submit" class="action-btn revert" <?php echo !$canRevert ? 'disabled' : ''; ?>>
                                                     <span class="material-icons" style="font-size:16px;">undo</span>
                                                     Revert
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="../api/mark_assessed.php" style="margin:0;display:inline;">
+                                            <form method="POST" action="../api/mark_assessed.php" class="action-form">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
-                                                <input type="hidden" name="counter_number" value="<?php echo intval($counter_number); ?>">
+                                                <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
                                                 <button type="submit" class="action-btn assessed" <?php echo !$canAssess ? 'disabled' : ''; ?>>
                                                     <span class="material-icons" style="font-size:16px;">check_circle</span>
                                                     Assessed
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="../api/mark_paid.php" style="margin:0;display:inline;" onsubmit="return confirm('Mark this queue as paid?');">
+                                            <form method="POST" action="../api/mark_paid.php" class="action-form" onsubmit="return confirm('Mark this queue as paid?');">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
-                                                <input type="hidden" name="counter_number" value="<?php echo intval($counter_number); ?>">
+                                                <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
                                                 <button type="submit" class="action-btn paid" <?php echo !$canPay ? 'disabled' : ''; ?>>
                                                     <span class="material-icons" style="font-size:16px;">payments</span>
                                                     Paid
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="../api/mark_assessed_paid.php" style="margin:0;display:inline;" onsubmit="return confirm('Mark this queue as assessed and paid?');">
+                                            <form method="POST" action="../api/mark_assessed_paid.php" class="action-form" onsubmit="return confirm('Mark this queue as assessed and paid?');">
                                                 <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
-                                                <input type="hidden" name="counter_number" value="<?php echo intval($counter_number); ?>">
+                                                <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
                                                 <button type="submit" class="action-btn assessed-paid" <?php echo !$canAssessPay ? 'disabled' : ''; ?>>
                                                     <span class="material-icons" style="font-size:16px;">done_all</span>
                                                     Assessed & Paid
