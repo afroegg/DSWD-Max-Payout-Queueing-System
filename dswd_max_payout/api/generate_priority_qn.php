@@ -2,6 +2,8 @@
 include('../auth/check.php');
 include('../config/db.php');
 
+date_default_timezone_set('Asia/Manila');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../staff/verifier.php');
     exit;
@@ -10,22 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $beneficiary_id = intval($_POST['beneficiary_id'] ?? 0);
 if ($beneficiary_id <= 0) {
     header('Location: ../staff/verifier.php');
-    exit;
-}
-
-$eligibility = $conn->prepare('SELECT eligibility_status FROM eligibility_forms WHERE beneficiary_id = ? LIMIT 1');
-$eligibility->bind_param('i', $beneficiary_id);
-$eligibility->execute();
-$eligibilityResult = $eligibility->get_result();
-
-if (!$eligibilityResult || $eligibilityResult->num_rows === 0) {
-    header('Location: ../staff/eligibility_form.php?beneficiary_id=' . $beneficiary_id);
-    exit;
-}
-
-$eligibilityRow = $eligibilityResult->fetch_assoc();
-if ($eligibilityRow['eligibility_status'] !== 'Eligible') {
-    header('Location: ../staff/eligibility_form.php?beneficiary_id=' . $beneficiary_id);
     exit;
 }
 
