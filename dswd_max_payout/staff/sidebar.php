@@ -11,11 +11,6 @@ $current = basename($_SERVER['PHP_SELF']);
             Verify [Step 1]
         </a>
 
-        <a href="register_walkin.php" class="<?php echo $current === 'register_walkin.php' ? 'active' : ''; ?>">
-            <span class="material-icons">person_add</span>
-            Register Walk-in
-        </a>
-
         <a href="counter.php" class="<?php echo ($current === 'counter.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
             <span class="material-icons">assignment</span>
             Assessment / Confirmation
