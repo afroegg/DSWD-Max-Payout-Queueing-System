@@ -8,6 +8,7 @@ function getQueueEntries($conn) {
     $query = $conn->prepare("
         SELECT
             q.id,
+            q.beneficiary_id,
             q.queue_number,
             q.queue_type,
             q.status,
@@ -151,33 +152,39 @@ function renderQueueRows($queue_entries) {
                                     <option value="<?php echo $i; ?>" <?php echo $selectedCounter === $i ? 'selected' : ''; ?>>Counter <?php echo $i; ?></option>
                                 <?php endfor; ?>
                             </select>
-                            <button type="submit" class="action-btn call" <?php echo !$canCall ? 'disabled' : ''; ?>><span class="material-icons">campaign</span>Call</button>
+                            <button type="submit" class="action-btn call" title="Call" <?php echo !$canCall ? 'disabled' : ''; ?>><span class="material-icons">campaign</span>Call</button>
                         </form>
 
-                        <a href="eligibility_form.php?queue_id=<?php echo intval($entry['id']); ?>" class="action-btn gis" <?php echo !$canOpenGIS ? 'style="pointer-events:none;opacity:0.45;"' : ''; ?>><span class="material-icons">description</span>GIS Form</a>
+                        <a href="eligibility_form.php?queue_id=<?php echo intval($entry['id']); ?>" class="action-btn gis" title="GIS Form" <?php echo !$canOpenGIS ? 'style="pointer-events:none;opacity:0.45;"' : ''; ?>><span class="material-icons">description</span>GIS</a>
 
                         <form method="POST" action="../api/revert_queue.php" class="action-form" onsubmit="return confirm('Revert this queue entry?');">
                             <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
                             <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
-                            <button type="submit" class="action-btn revert" <?php echo !$canRevert ? 'disabled' : ''; ?>><span class="material-icons">undo</span>Revert</button>
+                            <button type="submit" class="action-btn revert" title="Revert" <?php echo !$canRevert ? 'disabled' : ''; ?>><span class="material-icons">undo</span>Revert</button>
                         </form>
 
                         <form method="POST" action="../api/mark_assessed.php" class="action-form">
                             <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
                             <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
-                            <button type="submit" class="action-btn assessed" <?php echo !$canAssess ? 'disabled' : ''; ?>><span class="material-icons">check_circle</span>Assessed</button>
+                            <button type="submit" class="action-btn assessed" title="Assessed" <?php echo !$canAssess ? 'disabled' : ''; ?>><span class="material-icons">check_circle</span>Assessed</button>
                         </form>
 
                         <form method="POST" action="../api/mark_paid.php" class="action-form" onsubmit="return confirm('Mark this queue as paid?');">
                             <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
                             <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
-                            <button type="submit" class="action-btn paid" <?php echo !$canPay ? 'disabled' : ''; ?>><span class="material-icons">payments</span>Paid</button>
+                            <button type="submit" class="action-btn paid" title="Paid" <?php echo !$canPay ? 'disabled' : ''; ?>><span class="material-icons">payments</span>Paid</button>
                         </form>
 
                         <form method="POST" action="../api/mark_assessed_paid.php" class="action-form" onsubmit="return confirm('Mark this queue as assessed and paid?');">
                             <input type="hidden" name="queue_id" value="<?php echo intval($entry['id']); ?>">
                             <input type="hidden" name="counter_number" value="<?php echo $selectedCounter; ?>">
-                            <button type="submit" class="action-btn assessed-paid" <?php echo !$canAssessPay ? 'disabled' : ''; ?>><span class="material-icons">done_all</span>Assessed & Paid</button>
+                            <button type="submit" class="action-btn assessed-paid" title="Assessed and Paid" <?php echo !$canAssessPay ? 'disabled' : ''; ?>><span class="material-icons">done_all</span>Done</button>
+                        </form>
+
+                        <form method="POST" action="../api/remove_beneficiary.php" class="action-form" onsubmit="return confirm('Remove this beneficiary and all related queue/payout records?');">
+                            <input type="hidden" name="beneficiary_id" value="<?php echo intval($entry['beneficiary_id']); ?>">
+                            <input type="hidden" name="redirect" value="../staff/counter.php">
+                            <button type="submit" class="action-btn remove" title="Remove Beneficiary"><span class="material-icons">delete</span>Remove</button>
                         </form>
                     </div>
                 </td>
@@ -203,7 +210,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
     <link rel="stylesheet" href="../assets/style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        .counter-header{background:linear-gradient(135deg,#168fcb 0%,#127caf 100%);color:white;padding:24px;margin:-22px -22px 22px -22px}.counter-title{margin:0;font-size:32px;font-weight:700;letter-spacing:1px}.counter-subtitle{margin:6px 0 0;font-size:14px;opacity:.95}.header-controls{display:flex;justify-content:space-between;align-items:center;gap:16px}.back-link{display:inline-flex;align-items:center;gap:6px;color:white;text-decoration:none;font-weight:600}.table-wrap{overflow:auto;max-height:70vh}.counter-table{width:100%;min-width:1180px;border-collapse:collapse;background:white;border:1px solid #cfd6de}.counter-table thead{background:#f5f7fa;position:sticky;top:0;z-index:10}.counter-table th{padding:16px 12px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;color:#334155;letter-spacing:.5px;border-bottom:2px solid #cfd6de}.counter-table tbody tr{border-bottom:1px solid #e2e8f0}.counter-table tbody tr:hover{background:#f9fbfc}.row-calling{background:#fef3c7;border-left:4px solid #f59e0b}.row-priority{background:#fff7ed}.counter-table td{padding:16px 12px;vertical-align:middle}.counter-table td:nth-child(1){width:13%;font-weight:800;font-size:16px;color:#0f2f56;white-space:nowrap}.counter-table td:nth-child(2){width:24%;font-size:15px}.counter-table td:nth-child(3){width:23%}.counter-table td:nth-child(4){width:40%;text-align:left}.queue-priority{color:#c2410c!important}.priority-label{display:inline-block;margin-left:6px;background:#fed7aa;color:#9a3412;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}.assigned-counter{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#ecfeff;color:#155e75;font-size:12px;font-weight:800;margin-left:6px}.gis-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;margin-top:6px}.gis-locked{background:#dcfce7;color:#166534}.gis-draft{background:#fee2e2;color:#991b1b}.status-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;white-space:nowrap}.waiting-step-2{background:#dbeafe;color:#1e40af}.called-step-2{background:#fef3c7;color:#92400e}.waiting-step-3{background:#e0e7ff;color:#3730a3}.called-step-3{background:#fde68a;color:#78350f}.action-buttons{display:grid;grid-template-columns:126px 96px 128px 116px;gap:10px;align-items:center;justify-content:end}.action-form{display:contents;margin:0}.counter-select{grid-column:1;min-height:40px;width:126px;padding:7px 10px;border-radius:7px;border:1px solid #cbd5e1;font-size:14px;font-weight:800;background:white}.action-btn{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;font-weight:800;font-size:13px;border:none;border-radius:7px;cursor:pointer;text-transform:uppercase;white-space:nowrap;text-decoration:none;color:white}.action-btn .material-icons{font-size:16px}.action-btn.call{grid-column:2;background:#10b981}.action-btn.gis{grid-column:3;background:#93aee8}.action-btn.revert{grid-column:4;background:#f4b183}.action-btn.assessed{grid-column:1;background:#9bbcf0}.action-btn.paid{grid-column:2;background:#d6a6ef}.action-btn.assessed-paid{grid-column:3 / span 2;background:#6fcbd4}.action-btn:disabled,.counter-select:disabled{opacity:.45;cursor:not-allowed}.empty-state{padding:48px 24px;text-align:center;color:#94a3b8}.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.3}@media(max-width:1100px){.counter-table{min-width:1180px}.action-buttons{justify-content:start}}
+        .counter-header{background:linear-gradient(135deg,#168fcb 0%,#127caf 100%);color:white;padding:24px;margin:-22px -22px 22px -22px}.counter-title{margin:0;font-size:32px;font-weight:700;letter-spacing:1px}.counter-subtitle{margin:6px 0 0;font-size:14px;opacity:.95}.header-controls{display:flex;justify-content:space-between;align-items:center;gap:16px}.header-actions{display:flex;gap:10px;align-items:center}.back-link,.refresh-link{display:inline-flex;align-items:center;gap:6px;color:white;text-decoration:none;font-weight:800;background:rgba(255,255,255,.16);border:0;border-radius:10px;padding:12px 14px;cursor:pointer}.table-wrap{overflow:auto;max-height:70vh}.counter-table{width:100%;min-width:1280px;border-collapse:collapse;background:white;border:1px solid #cfd6de}.counter-table thead{background:#f5f7fa;position:sticky;top:0;z-index:10}.counter-table th{padding:16px 12px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;color:#334155;letter-spacing:.5px;border-bottom:2px solid #cfd6de}.counter-table tbody tr{border-bottom:1px solid #e2e8f0}.counter-table tbody tr:hover{background:#f9fbfc}.row-calling{background:#fef3c7;border-left:4px solid #f59e0b}.row-priority{background:#fff7ed}.counter-table td{padding:16px 12px;vertical-align:middle}.counter-table td:nth-child(1){width:13%;font-weight:800;font-size:16px;color:#0f2f56;white-space:nowrap}.counter-table td:nth-child(2){width:22%;font-size:15px}.counter-table td:nth-child(3){width:22%}.counter-table td:nth-child(4){width:43%;text-align:left}.queue-priority{color:#c2410c!important}.priority-label{display:inline-block;margin-left:6px;background:#fed7aa;color:#9a3412;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}.assigned-counter{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#ecfeff;color:#155e75;font-size:12px;font-weight:800;margin-left:6px}.gis-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;margin-top:6px}.gis-locked{background:#dcfce7;color:#166534}.gis-draft{background:#fee2e2;color:#991b1b}.status-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;white-space:nowrap}.waiting-step-2{background:#dbeafe;color:#1e40af}.called-step-2{background:#fef3c7;color:#92400e}.waiting-step-3{background:#e0e7ff;color:#3730a3}.called-step-3{background:#fde68a;color:#78350f}.action-buttons{display:grid;grid-template-columns:126px 88px 88px 96px 90px;gap:10px;align-items:center;justify-content:end}.action-form{display:contents;margin:0}.counter-select{grid-column:1;min-height:40px;width:126px;padding:7px 10px;border-radius:7px;border:1px solid #cbd5e1;font-size:14px;font-weight:800;background:white}.action-btn{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;font-weight:800;font-size:12px;border:none;border-radius:7px;cursor:pointer;text-transform:uppercase;white-space:nowrap;text-decoration:none;color:white}.action-btn .material-icons{font-size:16px}.action-btn.call{grid-column:2;background:#10b981}.action-btn.gis{grid-column:3;background:#93aee8}.action-btn.revert{grid-column:4;background:#f4b183}.action-btn.assessed{grid-column:5;background:#9bbcf0}.action-btn.paid{grid-column:2;background:#d6a6ef}.action-btn.assessed-paid{grid-column:3;background:#6fcbd4}.action-btn.remove{grid-column:4 / span 2;background:#991b1b}.action-btn:disabled,.counter-select:disabled{opacity:.45;cursor:not-allowed}.empty-state{padding:48px 24px;text-align:center;color:#94a3b8}.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.3}@media(max-width:1100px){.counter-table{min-width:1280px}.action-buttons{justify-content:start}.header-controls{flex-direction:column;align-items:flex-start}}
     </style>
 </head>
 <body>
@@ -216,7 +223,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
                         <h1 class="counter-title">COUNTER LIST [Step 2 & 3]</h1>
                         <p class="counter-subtitle">Call beneficiary, encode GIS form, approve assistance, then mark assessed or paid.</p>
                     </div>
-                    <a href="verifier.php" class="back-link"><span class="material-icons">arrow_back</span>Back to Verifier</a>
+                    <div class="header-actions">
+                        <button class="refresh-link" onclick="shadowRefresh()"><span class="material-icons">refresh</span>Refresh</button>
+                        <a href="verifier.php" class="back-link"><span class="material-icons">arrow_back</span>Back to Verifier</a>
+                    </div>
                 </div>
             </div>
             <div class="table-wrap" id="tableWrap">
