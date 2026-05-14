@@ -4,38 +4,132 @@ include('../auth/check.php');
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Verifier Step 1</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css">
-<style>
-*{box-sizing:border-box}body{background:#f3f6fb}.verifier-content{padding:20px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}.page-header-card{background:white;border:1px solid #d6dce8;border-radius:10px;padding:18px 20px;margin-bottom:16px}.page-header-card h1{margin:0;font-size:24px;color:#1f2937}.page-header-card p{margin:6px 0 0;font-size:14px;color:#6b7280}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.search-box{width:320px;max-width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}.back-link{text-decoration:none;background:#374151;color:white;padding:10px 14px;border-radius:8px;font-size:14px;display:inline-flex;align-items:center;gap:6px}.sheet-card{background:white;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column}.table-scroll{width:100%;overflow:auto;flex:1;min-height:0}.verifier-table{width:100%;min-width:2050px;border-collapse:collapse;font-size:13px}.verifier-table th{background:#dbeafe;color:#111827;font-weight:bold;text-align:center;border:1px solid #b6c3d5;padding:10px 8px;white-space:nowrap;position:sticky;top:0;z-index:3}.verifier-table td{border:1px solid #d1d5db;padding:9px 8px;white-space:nowrap;vertical-align:middle;background:white;text-align:center}.verifier-table tbody tr:nth-child(even) td{background:#f9fafb}.verifier-table tbody tr:hover td{background:#eef6ff}.row-priority td{background:#fff7ed!important}.priority-label{display:inline-block;background:#fed7aa;color:#9a3412;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-left:6px}.queue-number{font-weight:bold;color:#1d4ed8}.priority-queue-number{color:#c2410c!important}.status-badge{display:inline-block;min-width:125px;text-align:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold}.status-step-2{background:#fef3c7;color:#92400e}.status-called-2{background:#fde68a;color:#78350f}.status-step-3{background:#dbeafe;color:#1e40af}.status-called-3{background:#bfdbfe;color:#1e3a8a}.status-paid{background:#dcfce7;color:#166534}.status-none{background:#e5e7eb;color:#374151}.action-group{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.action-group form{margin:0}.action-btn{border:none;border-radius:6px;padding:8px 10px;font-size:12px;color:white;cursor:pointer;white-space:nowrap;font-weight:700;text-decoration:none;display:inline-block}.btn-regular{background:#16a34a}.btn-priority{background:#dc2626}.btn-regenerate{background:#f97316}.action-btn:disabled{background:#9ca3af;cursor:not-allowed}.footer-note{padding:10px 12px;font-size:12px;color:#6b7280;background:#f9fafb;border-top:1px solid #d1d5db;display:flex;justify-content:space-between}.empty-state,.loading-text{text-align:center;padding:20px;color:#6b7280;font-weight:bold}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;justify-content:center;align-items:center}.modal-box{width:360px;max-width:90%;background:#fff;border-radius:14px;padding:24px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.25)}.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.modal-btn{height:46px;border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-size:15px}.pal-btn{background:#16a34a}.prio-btn{background:#dc2626}.modal-cancel{width:100%;height:42px;border:none;border-radius:10px;background:#e5e7eb;color:#111827;font-weight:700;cursor:pointer}
-</style>
+    <meta charset="UTF-8">
+    <title>Verify Beneficiaries</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/style.css">
+
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f3f6fb; }
+        .verifier-content { padding: 20px; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .page-header-card { background: #fff; border: 1px solid #d6dce8; border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; flex-shrink: 0; }
+        .page-header-card h1 { margin: 0; font-size: 24px; color: #111827; }
+        .page-header-card p { margin: 6px 0 0; font-size: 14px; color: #6b7280; }
+        .toolbar { display: grid; grid-template-columns: 1fr 150px 170px 120px auto; gap: 10px; margin-bottom: 14px; flex-shrink: 0; align-items: center; }
+        .toolbar input, .toolbar select { height: 42px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; outline: none; }
+        .toolbar input:focus, .toolbar select:focus { border-color: #168fcb; box-shadow: 0 0 0 3px rgba(22,143,203,.12); }
+        .icon-link { height: 42px; min-width: 42px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: #374151; color: white; text-decoration: none; border: none; cursor: pointer; }
+        .sheet-card { background: white; border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .table-scroll { width: 100%; overflow: auto; flex: 1; min-height: 0; }
+        .verifier-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 13px; }
+        .verifier-table th { background: #dbeafe; color: #111827; font-weight: 800; text-align: left; border-bottom: 1px solid #b6c3d5; padding: 11px 10px; white-space: nowrap; position: sticky; top: 0; z-index: 3; }
+        .verifier-table td { border-bottom: 1px solid #e5e7eb; padding: 10px; vertical-align: middle; background: #fff; white-space: nowrap; }
+        .verifier-table tbody tr:nth-child(even) td { background: #f9fafb; }
+        .verifier-table tbody tr:hover td { background: #eef6ff; }
+        .row-priority td { background: #fff7ed !important; }
+        .row-priority:hover td { background: #ffedd5 !important; }
+        .row-number { text-align: center; font-weight: 800; color: #475569; }
+        .client-name { font-weight: 800; color: #111827; }
+        .muted-small { color: #6b7280; font-size: 12px; display: block; margin-top: 2px; }
+        .queue-number { font-weight: 900; color: #1d4ed8; }
+        .priority-queue-number { color: #c2410c !important; }
+        .priority-label { display: inline-block; background: #fed7aa; color: #9a3412; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 900; margin-left: 6px; }
+        .status-badge { display: inline-block; min-width: 116px; text-align: center; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .status-step-2 { background: #fef3c7; color: #92400e; }
+        .status-called-2 { background: #fde68a; color: #78350f; }
+        .status-step-3 { background: #dbeafe; color: #1e40af; }
+        .status-called-3 { background: #bfdbfe; color: #1e3a8a; }
+        .status-paid { background: #dcfce7; color: #166534; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-none { background: #e5e7eb; color: #374151; }
+        .action-group { display: flex; gap: 6px; justify-content: center; }
+        .action-group form { margin: 0; }
+        .icon-btn { width: 36px; height: 36px; border: none; border-radius: 8px; color: white; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+        .icon-btn .material-icons { font-size: 19px; }
+        .btn-regular { background: #16a34a; }
+        .btn-priority { background: #dc2626; }
+        .btn-regenerate { background: #f97316; }
+        .btn-view { background: #2563eb; }
+        .icon-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .icon-btn:hover:not(:disabled) { opacity: .88; }
+        .footer-note { padding: 10px 12px; font-size: 12px; color: #6b7280; background: #f9fafb; border-top: 1px solid #d1d5db; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+        .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid #d1d5db; background: #fff; flex-shrink: 0; }
+        .page-btn { height: 34px; min-width: 34px; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; font-weight: 800; }
+        .page-btn:disabled { opacity: .45; cursor: not-allowed; }
+        .page-info { font-size: 13px; color: #475569; font-weight: 700; }
+        .empty-state, .loading-text { text-align: center; padding: 22px; color: #6b7280; font-weight: 800; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
+        .modal-box { width: 420px; max-width: 96%; background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 14px 40px rgba(0,0,0,.25); }
+        .details-box { width: 760px; }
+        .modal-box h2 { margin: 0; color: #111827; font-size: 22px; }
+        .modal-box p { margin: 8px 0 20px; color: #4b5563; font-size: 14px; }
+        .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .modal-btn { height: 46px; border: none; border-radius: 10px; color: white; font-weight: 900; cursor: pointer; font-size: 15px; }
+        .pal-btn { background: #16a34a; }
+        .prio-btn { background: #dc2626; }
+        .modal-cancel { width: 100%; height: 42px; border: none; border-radius: 10px; background: #e5e7eb; color: #111827; font-weight: 900; cursor: pointer; }
+        .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+        .detail-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; }
+        .detail-item span { display: block; font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        .detail-item strong { display: block; color: #111827; font-size: 13px; word-break: break-word; }
+        @media (max-width: 1000px) { .toolbar { grid-template-columns: 1fr 1fr; } .verifier-table { min-width: 900px; } }
+        @media (max-width: 700px) { .toolbar { grid-template-columns: 1fr; } .details-grid { grid-template-columns: 1fr; } .verifier-content { overflow: visible; } .sheet-card { min-height: 520px; } }
+    </style>
 </head>
 <body>
 <div class="app">
-<main class="main">
-<section class="verifier-content">
-<div class="page-header-card"><h1>VERIFIER [Step 1]</h1><p>Masterlist verification and PAL / PRIO queue number generation only. GIS interview is done after calling at Step 2 Assessment.</p></div>
-<div class="toolbar"><input type="text" id="searchInput" class="search-box" placeholder="Search beneficiary..."><a href="verifier.php" class="back-link"><span class="material-icons" style="font-size:18px;">refresh</span>Refresh</a></div>
-<div class="sheet-card"><div class="table-scroll"><table id="verifierTable" class="verifier-table"><thead><tr><th>#</th><th>Surname</th><th>First Name</th><th>Middle Initial</th><th>Suffix</th><th>Region</th><th>Province</th><th>City/Municipality</th><th>Barangay</th><th>Contact No.</th><th>Birthday</th><th>Age</th><th>Sex</th><th>LGU</th><th>Generated QN</th><th>Real-Time Status</th><th>Actions</th></tr></thead><tbody id="beneficiaryRows"><tr><td colspan="17" class="loading-text">Loading beneficiaries...</td></tr></tbody></table></div><div class="footer-note"><span>Auto-updates every 3 seconds.</span><span id="lastUpdated">Last updated: --</span></div></div>
-</section>
-</main>
-<?php include('sidebar.php'); ?>
+    <main class="main">
+        <section class="verifier-content">
+            <div class="page-header-card">
+                <h1>Step 1: Verify</h1>
+                <p>Search beneficiary records, view details, and generate queue numbers.</p>
+            </div>
+            <div class="toolbar">
+                <input type="text" id="searchInput" placeholder="Search name, queue, barangay, LGU...">
+                <select id="typeFilter"><option value="all">All Types</option><option value="priority">PRIO Only</option><option value="regular">PAL Only</option><option value="none">No Queue</option></select>
+                <select id="statusFilter"><option value="all">All Status</option><option value="WAITING_STEP_2">Waiting Step 2</option><option value="CALLED_STEP_2">Called Step 2</option><option value="WAITING_STEP_3">Waiting Step 3</option><option value="CALLED_STEP_3">Called Step 3</option><option value="PAID">Paid</option><option value="none">No Queue</option></select>
+                <select id="rowsPerPage"><option value="10">10 rows</option><option value="25" selected>25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select>
+                <a href="register_walkin.php" class="icon-link" title="Register Walk-in"><span class="material-icons">person_add</span></a>
+            </div>
+            <div class="sheet-card">
+                <div class="table-scroll">
+                    <table class="verifier-table">
+                        <thead><tr><th style="width:55px;text-align:center;">#</th><th style="width:135px;">Queue No.</th><th>Name</th><th>Barangay</th><th style="width:70px;">Age</th><th style="width:70px;">Sex</th><th>LGU</th><th style="width:145px;">Status</th><th style="width:180px;text-align:center;">Actions</th></tr></thead>
+                        <tbody id="beneficiaryRows"><tr><td colspan="9" class="loading-text">Loading beneficiaries...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="paginationControls"></div>
+                <div class="footer-note"><span id="recordInfo">Showing records...</span><span id="lastUpdated">Last updated: --</span></div>
+            </div>
+        </section>
+    </main>
+    <?php include('sidebar.php'); ?>
 </div>
+
 <div id="regenerateModal" class="modal-overlay"><div class="modal-box"><h2>Choose Queue Type</h2><p>Select the new queue type for this beneficiary.</p><form id="regenerateForm" method="POST" action="../api/regenerate_qn.php"><input type="hidden" name="beneficiary_id" id="regenBeneficiaryId"><input type="hidden" name="new_queue_type" id="regenQueueType"><div class="modal-actions"><button type="button" class="modal-btn pal-btn" onclick="submitRegenerate('PAL')">PAL</button><button type="button" class="modal-btn prio-btn" onclick="submitRegenerate('PRIO')">PRIO</button></div><button type="button" class="modal-cancel" onclick="closeRegenerateModal()">Cancel</button></form></div></div>
+<div id="detailsModal" class="modal-overlay"><div class="modal-box details-box"><h2>Beneficiary Details</h2><p>Complete record view without cluttering the main table.</p><div class="details-grid" id="detailsGrid"></div><button type="button" class="modal-cancel" onclick="closeDetailsModal()">Close</button></div></div>
+
 <script>
-const searchInput=document.getElementById('searchInput');const tableBody=document.getElementById('beneficiaryRows');const lastUpdated=document.getElementById('lastUpdated');let beneficiaries=[];
+const searchInput=document.getElementById('searchInput'),typeFilter=document.getElementById('typeFilter'),statusFilter=document.getElementById('statusFilter'),rowsPerPage=document.getElementById('rowsPerPage'),tableBody=document.getElementById('beneficiaryRows'),lastUpdated=document.getElementById('lastUpdated'),recordInfo=document.getElementById('recordInfo'),paginationControls=document.getElementById('paginationControls');let beneficiaries=[],currentPage=1;
 function escapeHTML(value){if(value===null||value===undefined)return'';return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
-function displayStatus(status){if(status==='WAITING_STEP_2')return'WAITING: STEP 2';if(status==='CALLED_STEP_2')return'CALLED: STEP 2';if(status==='WAITING_STEP_3')return'WAITING: STEP 3';if(status==='CALLED_STEP_3')return'CALLED: STEP 3';if(status==='PAID')return'PAID';return'NO QUEUE NUMBER'}
-function statusClass(status){if(status==='WAITING_STEP_2')return'status-step-2';if(status==='CALLED_STEP_2')return'status-called-2';if(status==='WAITING_STEP_3')return'status-step-3';if(status==='CALLED_STEP_3')return'status-called-3';if(status==='PAID')return'status-paid';return'status-none'}
+function displayStatus(status){if(status==='WAITING_STEP_2')return'Waiting Step 2';if(status==='CALLED_STEP_2')return'Called Step 2';if(status==='WAITING_STEP_3')return'Waiting Step 3';if(status==='CALLED_STEP_3')return'Called Step 3';if(status==='PAID')return'Paid';if(status==='CANCELLED')return'Cancelled';return'No Queue'}
+function statusClass(status){if(status==='WAITING_STEP_2')return'status-step-2';if(status==='CALLED_STEP_2')return'status-called-2';if(status==='WAITING_STEP_3')return'status-step-3';if(status==='CALLED_STEP_3')return'status-called-3';if(status==='PAID')return'status-paid';if(status==='CANCELLED')return'status-cancelled';return'status-none'}
+function getFullName(row){const middle=row.middle_name?' '+row.middle_name:'';const ext=row.ext_name?' '+row.ext_name:'';return `${row.last_name||''}, ${row.first_name||''}${middle}${ext}`.trim()}
+function getFilteredRows(){const searchValue=searchInput.value.toLowerCase().trim(),typeValue=typeFilter.value,statusValue=statusFilter.value;return beneficiaries.filter(row=>{const hasQueue=row.queue_number&&row.queue_number!=='';const searchable=[row.queue_number,row.last_name,row.first_name,row.middle_name,row.ext_name,row.barangay,row.city_municipality,row.lgu,row.contact_number,row.beneficiary_code].join(' ').toLowerCase();if(searchValue&&!searchable.includes(searchValue))return false;if(typeValue==='priority'&&row.queue_type!=='priority')return false;if(typeValue==='regular'&&row.queue_type!=='regular')return false;if(typeValue==='none'&&hasQueue)return false;if(statusValue==='none'&&hasQueue)return false;if(statusValue!=='all'&&statusValue!=='none'&&row.workflow_status!==statusValue)return false;return true})}
+function renderPagination(totalRows,totalPages){if(totalRows===0){paginationControls.innerHTML='';return}paginationControls.innerHTML=`<button class="page-btn" onclick="goToPage(1)" ${currentPage===1?'disabled':''}>«</button><button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button><span class="page-info">Page ${currentPage} of ${totalPages}</span><button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button><button class="page-btn" onclick="goToPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`}
+function goToPage(page){const filtered=getFilteredRows(),perPage=parseInt(rowsPerPage.value,10),totalPages=Math.max(1,Math.ceil(filtered.length/perPage));currentPage=Math.min(Math.max(1,page),totalPages);renderTable()}
+function renderTable(){const filtered=getFilteredRows(),perPage=parseInt(rowsPerPage.value,10),totalPages=Math.max(1,Math.ceil(filtered.length/perPage));if(currentPage>totalPages)currentPage=totalPages;const startIndex=(currentPage-1)*perPage,pageRows=filtered.slice(startIndex,startIndex+perPage);if(pageRows.length===0){tableBody.innerHTML='<tr><td colspan="9" class="empty-state">No beneficiaries found.</td></tr>';recordInfo.innerText=`Showing 0 of ${beneficiaries.length} records`;renderPagination(0,1);return}let html='';pageRows.forEach((row,index)=>{const hasQueue=row.queue_number&&row.queue_number!=='';const isPriority=row.queue_type==='priority';const rowClass=isPriority?'row-priority':'';const queueNumberClass=isPriority?'queue-number priority-queue-number':'queue-number';const priorityLabel=isPriority?'<span class="priority-label">PRIO</span>':'';const fullName=getFullName(row);const actualNumber=startIndex+index+1;html+=`<tr class="${rowClass}"><td class="row-number">${actualNumber}</td><td class="${queueNumberClass}">${hasQueue?escapeHTML(row.queue_number)+priorityLabel:'Not generated'}</td><td><span class="client-name">${escapeHTML(fullName)}</span><span class="muted-small">${escapeHTML(row.beneficiary_code||'No code')}</span></td><td>${escapeHTML(row.barangay)}</td><td>${escapeHTML(row.age)}</td><td>${escapeHTML(row.sex)}</td><td>${escapeHTML(row.lgu)}</td><td><span class="status-badge ${statusClass(row.workflow_status)}">${displayStatus(row.workflow_status)}</span></td><td><div class="action-group"><button type="button" class="icon-btn btn-view" title="View Details" onclick="openDetailsModal('${escapeHTML(row.id)}')"><span class="material-icons">visibility</span></button><form method="POST" action="../api/generate_regular_qn.php" onsubmit="return confirm('Generate PAL queue number for this beneficiary?');"><input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}"><button type="submit" class="icon-btn btn-regular" title="Generate PAL" ${hasQueue?'disabled':''}><span class="material-icons">add_circle</span></button></form><form method="POST" action="../api/generate_priority_qn.php" onsubmit="return confirm('Generate PRIO queue number for this beneficiary?');"><input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}"><button type="submit" class="icon-btn btn-priority" title="Generate PRIO" ${hasQueue?'disabled':''}><span class="material-icons">priority_high</span></button></form><button type="button" class="icon-btn btn-regenerate" title="Regenerate Queue" onclick="openRegenerateModal('${escapeHTML(row.id)}')" ${!hasQueue?'disabled':''}><span class="material-icons">sync</span></button></div></td></tr>`});tableBody.innerHTML=html;recordInfo.innerText=`Showing ${startIndex+1}-${Math.min(startIndex+perPage,filtered.length)} of ${filtered.length} filtered records (${beneficiaries.length} total)`;renderPagination(filtered.length,totalPages)}
 function openRegenerateModal(id){document.getElementById('regenBeneficiaryId').value=id;document.getElementById('regenQueueType').value='';document.getElementById('regenerateModal').style.display='flex'}
-function closeRegenerateModal(){document.getElementById('regenerateModal').style.display='none'}
+function closeRegenerateModal(){document.getElementById('regenerateModal').style.display='none';document.getElementById('regenBeneficiaryId').value='';document.getElementById('regenQueueType').value=''}
 function submitRegenerate(type){if(type!=='PAL'&&type!=='PRIO'){alert('Invalid queue type.');return}if(!confirm('Regenerate queue number as '+type+'?'))return;document.getElementById('regenQueueType').value=type;document.getElementById('regenerateForm').submit()}
-function renderTable(){const searchValue=searchInput.value.toLowerCase();const filtered=beneficiaries.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(searchValue)));if(filtered.length===0){tableBody.innerHTML='<tr><td colspan="17" class="empty-state">No beneficiaries found.</td></tr>';return}let html='';filtered.forEach((row,index)=>{const hasQueue=row.queue_number&&row.queue_number!=='';const isPriority=row.queue_type==='priority';const birthday=row.birthday_month&&row.birthday_day&&row.birthday_year?`${row.birthday_month}/${row.birthday_day}/${row.birthday_year}`:'';const qClass=isPriority?'queue-number priority-queue-number':'queue-number';const prio=isPriority?'<span class="priority-label">PRIO</span>':'';html+=`<tr class="${isPriority?'row-priority':''}"><td>${index+1}</td><td>${escapeHTML(row.last_name)}</td><td>${escapeHTML(row.first_name)}</td><td>${escapeHTML(row.middle_name)}</td><td>${escapeHTML(row.ext_name)}</td><td>${escapeHTML(row.region)}</td><td>${escapeHTML(row.province)}</td><td>${escapeHTML(row.city_municipality)}</td><td>${escapeHTML(row.barangay)}</td><td>${escapeHTML(row.contact_number)}</td><td>${escapeHTML(birthday)}</td><td>${escapeHTML(row.age)}</td><td>${escapeHTML(row.sex)}</td><td>${escapeHTML(row.lgu)}</td><td class="${qClass}">${hasQueue?escapeHTML(row.queue_number)+prio:'Not generated'}</td><td><span class="status-badge ${statusClass(row.workflow_status)}">${displayStatus(row.workflow_status)}</span></td><td><div class="action-group"><form method="POST" action="../api/generate_regular_qn.php" onsubmit="return confirm('Generate regular queue number?');"><input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}"><button type="submit" class="action-btn btn-regular" ${hasQueue?'disabled':''}>Generate Regular QN</button></form><form method="POST" action="../api/generate_priority_qn.php" onsubmit="return confirm('Generate priority queue number?');"><input type="hidden" name="beneficiary_id" value="${escapeHTML(row.id)}"><button type="submit" class="action-btn btn-priority" ${hasQueue?'disabled':''}>Generate Priority QN</button></form><button type="button" class="action-btn btn-regenerate" onclick="openRegenerateModal('${escapeHTML(row.id)}')" ${!hasQueue?'disabled':''}>Regenerate QN</button></div></td></tr>`});tableBody.innerHTML=html}
-async function loadVerifierData(){try{const response=await fetch('../api/verifier_data.php');const data=await response.json();if(!data.success){tableBody.innerHTML=`<tr><td colspan="17" class="empty-state">${escapeHTML(data.message)}</td></tr>`;return}beneficiaries=data.beneficiaries;renderTable();lastUpdated.innerText='Last updated: '+new Date().toLocaleTimeString()}catch(error){tableBody.innerHTML='<tr><td colspan="17" class="empty-state">Failed to load data.</td></tr>'}}
-searchInput.addEventListener('input',renderTable);loadVerifierData();setInterval(loadVerifierData,3000);
+function openDetailsModal(id){const row=beneficiaries.find(item=>String(item.id)===String(id));if(!row)return;const birthday=row.birthday_month&&row.birthday_day&&row.birthday_year?`${row.birthday_month}/${row.birthday_day}/${row.birthday_year}`:'';const details=[['Beneficiary Code',row.beneficiary_code],['Queue Number',row.queue_number||'Not generated'],['Queue Type',row.queue_type||'None'],['Status',displayStatus(row.workflow_status)],['Last Name',row.last_name],['First Name',row.first_name],['Middle Name',row.middle_name],['Ext. Name',row.ext_name],['Region',row.region],['Province',row.province],['City/Municipality',row.city_municipality],['Barangay',row.barangay],['Contact Number',row.contact_number],['Birthday',birthday],['Age',row.age],['Sex',row.sex],['LGU',row.lgu]];document.getElementById('detailsGrid').innerHTML=details.map(item=>`<div class="detail-item"><span>${escapeHTML(item[0])}</span><strong>${escapeHTML(item[1]||'-')}</strong></div>`).join('');document.getElementById('detailsModal').style.display='flex'}
+function closeDetailsModal(){document.getElementById('detailsModal').style.display='none'}
+document.getElementById('regenerateModal').addEventListener('click',function(event){if(event.target===this)closeRegenerateModal()});document.getElementById('detailsModal').addEventListener('click',function(event){if(event.target===this)closeDetailsModal()});
+async function loadVerifierData(){try{const response=await fetch('../api/verifier_data.php?ts='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('Failed to load verifier data.');const data=await response.json();if(!data.success){tableBody.innerHTML=`<tr><td colspan="9" class="empty-state">${escapeHTML(data.message)}</td></tr>`;return}beneficiaries=data.beneficiaries;renderTable();lastUpdated.innerText='Last updated: '+new Date().toLocaleTimeString()}catch(error){console.error(error);tableBody.innerHTML='<tr><td colspan="9" class="empty-state">Failed to load data.</td></tr>'}}
+[searchInput,typeFilter,statusFilter,rowsPerPage].forEach(element=>{element.addEventListener('input',()=>{currentPage=1;renderTable()});element.addEventListener('change',()=>{currentPage=1;renderTable()})});loadVerifierData();setInterval(loadVerifierData,5000);
 </script>
 </body>
 </html>
