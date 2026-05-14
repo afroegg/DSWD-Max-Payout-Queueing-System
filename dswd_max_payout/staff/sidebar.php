@@ -15,6 +15,11 @@ $current = basename($_SERVER['PHP_SELF']);
             <span class="material-icons">assignment</span>
             Assessment / Confirmation
         </a>
+
+        <a href="analytics.php" class="<?php echo $current === 'analytics.php' ? 'active' : ''; ?>">
+            <span class="material-icons">analytics</span>
+            Analytics
+        </a>
     </nav>
 
     <div class="sidebar-footer">
