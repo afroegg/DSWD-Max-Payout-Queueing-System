@@ -8,26 +8,18 @@ $current = basename($_SERVER['PHP_SELF']);
     <nav>
         <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
             <span class="material-icons">fact_check</span>
-            Verifier [Step 1]
-        </a>
-
-        <a href="counter.php" class="<?php echo $current === 'counter.php' ? 'active' : ''; ?>">
-            <span class="material-icons">table_restaurant</span>
-            Counter List [Step 2 & 3]
-        </a>
-
-        <!-- Temporarily hidden until old pages are needed again -->
-        <!--
-        <a href="dashboard.php" class="<?php echo $current === 'dashboard.php' ? 'active' : ''; ?>">
-            <span class="material-icons">dashboard</span>
-            Dashboard
+            Verify [Step 1]
         </a>
 
         <a href="register_walkin.php" class="<?php echo $current === 'register_walkin.php' ? 'active' : ''; ?>">
             <span class="material-icons">person_add</span>
-            Register
+            Register Walk-in
         </a>
-        -->
+
+        <a href="counter.php" class="<?php echo ($current === 'counter.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
+            <span class="material-icons">assignment</span>
+            Assessment / Confirmation
+        </a>
     </nav>
 
     <div class="sidebar-footer">
