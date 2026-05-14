@@ -1,11 +1,19 @@
 <?php
-include('../auth/check.php');
 include('../config/db.php');
 
 date_default_timezone_set('Asia/Manila');
 
+$source = trim($_POST['source'] ?? 'admin');
+$is_kiosk = ($source === 'kiosk');
+$backPage = $is_kiosk ? '../kiosk/index.php' : '../staff/register_walkin.php';
+$successPage = $is_kiosk ? '../kiosk/index.php' : '../staff/verifier.php';
+
+if (!$is_kiosk) {
+    include('../auth/check.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: ../staff/register_walkin.php");
+    header("Location: {$backPage}");
     exit;
 }
 
@@ -29,6 +37,15 @@ $household_id = trim($_POST['household_id'] ?? '');
 $program_type = trim($_POST['program_type'] ?? '');
 $sms_opt_in = intval($_POST['sms_opt_in'] ?? 0);
 
+function redirectBack($message, $backPage) {
+    $safeMessage = addslashes($message);
+    echo "<script>
+        alert('{$safeMessage}');
+        window.location.href = '{$backPage}';
+    </script>";
+    exit;
+}
+
 if (
     $first_name === '' ||
     $last_name === '' ||
@@ -44,33 +61,17 @@ if (
     $lgu === '' ||
     $program_type === ''
 ) {
-    echo "<script>
-        alert('Please complete all required fields.');
-        window.history.back();
-    </script>";
-    exit;
+    redirectBack('Please complete all required fields.', $backPage);
 }
 
 if (!in_array($sex, ['Male', 'Female'])) {
-    echo "<script>
-        alert('Invalid sex selected.');
-        window.history.back();
-    </script>";
-    exit;
+    redirectBack('Invalid sex selected.', $backPage);
 }
 
 if ($birthday_month < 1 || $birthday_month > 12 || $birthday_day < 1 || $birthday_day > 31) {
-    echo "<script>
-        alert('Invalid birthday.');
-        window.history.back();
-    </script>";
-    exit;
+    redirectBack('Invalid birthday.', $backPage);
 }
 
-/*
-    Duplicate check for personal record only.
-    This avoids redundant beneficiary records.
-*/
 if ($contact_number !== '') {
     $dup = $conn->prepare("
         SELECT id, beneficiary_code
@@ -100,16 +101,16 @@ $dupResult = $dup->get_result();
 
 if ($dupResult && $dupResult->num_rows > 0) {
     $existing = $dupResult->fetch_assoc();
-    $code = addslashes($existing['beneficiary_code'] ?? 'Existing Record');
+    $code = urlencode($existing['beneficiary_code'] ?? 'Existing Record');
 
-    echo "<script>
-        alert('Duplicate beneficiary record found. Existing Code: {$code}');
-        window.location.href = '../staff/verifier.php';
-    </script>";
-    exit;
+    if ($is_kiosk) {
+        header("Location: ../kiosk/index.php?success=1&duplicate=1&code={$code}");
+        exit;
+    }
+
+    redirectBack('Duplicate beneficiary record found. Existing Code: ' . ($existing['beneficiary_code'] ?? 'Existing Record'), '../staff/verifier.php');
 }
 
-/* Generate next PAL beneficiary code for personal records */
 $getLast = $conn->query("
     SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number
     FROM beneficiaries
@@ -178,6 +179,13 @@ $insert->bind_param(
 );
 
 if ($insert->execute()) {
+    $code = urlencode($beneficiary_code);
+
+    if ($is_kiosk) {
+        header("Location: ../kiosk/index.php?success=1&code={$code}");
+        exit;
+    }
+
     echo "<script>
         alert('Beneficiary record saved successfully. Code: {$beneficiary_code}');
         window.location.href = '../staff/verifier.php';
@@ -186,9 +194,5 @@ if ($insert->execute()) {
 }
 
 $error = addslashes($conn->error);
-echo "<script>
-    alert('Failed to save beneficiary record. Error: {$error}');
-    window.history.back();
-</script>";
-exit;
+redirectBack('Failed to save beneficiary record. Error: ' . $error, $backPage);
 ?>
