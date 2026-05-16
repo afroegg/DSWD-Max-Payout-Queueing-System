@@ -721,3 +721,12 @@ body {
     text-align: center !important;
     white-space: normal !important;
 }
+
+/* ===== VERIFY PAGE OVERRIDES ===== */
+.verifier-content .toolbar {
+    grid-template-columns: 1fr 150px 170px 120px !important;
+}
+
+.verifier-content .toolbar .icon-link {
+    display: none !important;
+}
