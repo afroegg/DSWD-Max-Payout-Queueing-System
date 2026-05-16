@@ -8,12 +8,27 @@ $current = basename($_SERVER['PHP_SELF']);
     <nav>
         <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
             <span class="material-icons">fact_check</span>
-            Verify [Step 1]
+            Verify
         </a>
 
-        <a href="counter.php" class="<?php echo ($current === 'counter.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
+        <a href="register_walkin.php" class="<?php echo $current === 'register_walkin.php' ? 'active' : ''; ?>">
+            <span class="material-icons">person_add</span>
+            Register
+        </a>
+
+        <a href="assessment.php" class="<?php echo ($current === 'assessment.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
             <span class="material-icons">assignment</span>
-            Assessment / Confirmation
+            Assessment
+        </a>
+
+        <a href="confirmation.php" class="<?php echo $current === 'confirmation.php' ? 'active' : ''; ?>">
+            <span class="material-icons">payments</span>
+            Confirmation
+        </a>
+
+        <a href="guard_check.php" class="<?php echo $current === 'guard_check.php' ? 'active' : ''; ?>">
+            <span class="material-icons">verified_user</span>
+            Guard Check
         </a>
 
         <a href="analytics.php" class="<?php echo $current === 'analytics.php' ? 'active' : ''; ?>">
