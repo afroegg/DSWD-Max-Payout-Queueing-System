@@ -16,17 +16,17 @@ $current = basename($_SERVER['PHP_SELF']);
             Register
         </a>
 
-        <a href="assessment.php" class="<?php echo ($current === 'assessment.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
+        <a href="assessment_screen.php" class="<?php echo ($current === 'assessment_screen.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
             <span class="material-icons">assignment</span>
             Assessment
         </a>
 
-        <a href="confirmation.php" class="<?php echo $current === 'confirmation.php' ? 'active' : ''; ?>">
+        <a href="confirmation_screen.php" class="<?php echo $current === 'confirmation_screen.php' ? 'active' : ''; ?>">
             <span class="material-icons">payments</span>
             Confirmation
         </a>
 
-        <a href="guard_check.php" class="<?php echo $current === 'guard_check.php' ? 'active' : ''; ?>">
+        <a href="guard_check_screen.php" class="<?php echo $current === 'guard_check_screen.php' ? 'active' : ''; ?>">
             <span class="material-icons">verified_user</span>
             Guard Check
         </a>
