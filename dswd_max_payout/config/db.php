@@ -14,11 +14,11 @@
     localhost, root, empty password, dswd_max_payout, 3306
 */
 
-$db_host = getenv('DB_HOST') ?: getenv('MYSQLHOST');
-$db_user = getenv('DB_USER') ?: getenv('MYSQLUSER');
-$db_pass = getenv('DB_PASS') ?: getenv('MYSQLPASSWORD');
-$db_name = getenv('DB_NAME') ?: getenv('MYSQLDATABASE');
-$db_port = getenv('DB_PORT') ?: getenv('MYSQLPORT');
+$db_host = getenv('DB_HOST') ?: getenv('mysql.railway.internal');
+$db_user = getenv('DB_USER') ?: getenv('root');
+$db_pass = getenv('DB_PASS') ?: getenv('UMiFmmqBGdmWSduxuNrmXuEYMifHcyqu');
+$db_name = getenv('DB_NAME') ?: getenv('railway');
+$db_port = getenv('DB_PORT') ?: getenv('3306');
 
 $is_render = getenv('RENDER') || getenv('RENDER_SERVICE_ID') || getenv('RENDER_EXTERNAL_URL');
 
