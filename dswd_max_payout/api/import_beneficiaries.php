@@ -3,9 +3,10 @@ include('../auth/check.php');
 include('../config/db.php');
 
 header('Content-Type: application/json');
-set_time_limit(180);
+set_time_limit(240);
 ini_set('memory_limit', '256M');
 define('MAX_IMPORT_ROWS', 5000);
+define('BATCH_SIZE', 250);
 
 function respond($success, $message, $extra = []) {
     echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
@@ -27,31 +28,21 @@ function valueFrom($row, $keys, $default = '') {
 }
 
 function parseBirthday($birthday, $month, $day, $year) {
-    $month = intval($month);
-    $day = intval($day);
-    $year = intval($year);
-
+    $month = intval($month); $day = intval($day); $year = intval($year);
     if ($month > 0 && $day > 0 && $year > 0) return [$month, $day, $year];
-
     $birthday = trim((string)$birthday);
     if ($birthday === '') return [0, 0, 0];
-
     if (is_numeric($birthday) && intval($birthday) > 20000) {
         $unix = (intval($birthday) - 25569) * 86400;
         return [intval(gmdate('n', $unix)), intval(gmdate('j', $unix)), intval(gmdate('Y', $unix))];
     }
-
     $birthday = str_replace(['-', '.'], '/', $birthday);
     $parts = explode('/', $birthday);
-
     if (count($parts) === 3) {
-        $p1 = intval($parts[0]);
-        $p2 = intval($parts[1]);
-        $p3 = intval($parts[2]);
+        $p1 = intval($parts[0]); $p2 = intval($parts[1]); $p3 = intval($parts[2]);
         if ($p1 > 1900) return [$p2, $p3, $p1];
         return [$p1, $p2, $p3];
     }
-
     return [0, 0, 0];
 }
 
@@ -74,22 +65,21 @@ function normalizePwd($value) {
     return in_array($value, ['1', 'yes', 'y', 'true', 'pwd', 'oo']) ? 1 : 0;
 }
 
-function readCsvRows($path) {
-    $rows = [];
-    $handle = fopen($path, 'r');
-    if (!$handle) respond(false, 'Unable to read uploaded CSV file.');
-    while (($data = fgetcsv($handle)) !== false) $rows[] = $data;
-    fclose($handle);
-    return $rows;
+function duplicateKeys($first, $last, $contact, $month, $day, $year) {
+    $first = strtolower(trim($first));
+    $last = strtolower(trim($last));
+    $contact = trim($contact);
+    $keys = [];
+    if ($contact !== '') $keys[] = 'contact|' . $first . '|' . $last . '|' . $contact;
+    $keys[] = 'bday|' . $first . '|' . $last . '|' . intval($month) . '|' . intval($day) . '|' . intval($year);
+    return $keys;
 }
 
 function colIndex($cellRef) {
     preg_match('/[A-Z]+/', strtoupper($cellRef), $m);
     $letters = $m[0] ?? 'A';
     $index = 0;
-    for ($i = 0; $i < strlen($letters); $i++) {
-        $index = $index * 26 + (ord($letters[$i]) - 64);
-    }
+    for ($i = 0; $i < strlen($letters); $i++) $index = $index * 26 + (ord($letters[$i]) - 64);
     return $index - 1;
 }
 
@@ -101,15 +91,14 @@ function xmlObject($xml, $message) {
 }
 
 function readXlsxRows($path) {
-    if (!class_exists('ZipArchive')) respond(false, 'Excel import requires PHP ZipArchive. Please upload CSV instead.');
-
+    if (!class_exists('ZipArchive')) respond(false, 'Excel import requires PHP ZipArchive. CSV import is faster and recommended.');
     $zip = new ZipArchive();
     if ($zip->open($path) !== true) respond(false, 'Unable to open Excel file. Upload valid .xlsx or CSV.');
 
     $sharedStrings = [];
     $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
     if ($sharedXml !== false) {
-        $shared = xmlObject($sharedXml, 'Invalid Excel shared strings. Save as .xlsx again or export CSV.');
+        $shared = xmlObject($sharedXml, 'Invalid Excel shared strings. Export as CSV.');
         foreach ($shared->si as $si) {
             $text = '';
             if (isset($si->t)) $text .= (string)$si->t;
@@ -119,37 +108,11 @@ function readXlsxRows($path) {
     }
 
     $sheetPath = 'xl/worksheets/sheet1.xml';
-    $workbookXml = $zip->getFromName('xl/workbook.xml');
-    $relsXml = $zip->getFromName('xl/_rels/workbook.xml.rels');
-
-    if ($workbookXml !== false && $relsXml !== false) {
-        $workbook = xmlObject($workbookXml, 'Invalid workbook XML. Save as .xlsx again or export CSV.');
-        $rels = xmlObject($relsXml, 'Invalid workbook relationship XML. Save as .xlsx again or export CSV.');
-        $workbook->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');
-        $firstSheet = $workbook->sheets->sheet[0] ?? null;
-        if ($firstSheet) {
-            $attrs = $firstSheet->attributes('r', true);
-            $rid = (string)$attrs['id'];
-            foreach ($rels->Relationship as $rel) {
-                $a = $rel->attributes();
-                if ((string)$a['Id'] === $rid) {
-                    $target = (string)$a['Target'];
-                    if (strpos($target, '/xl/') === 0) $sheetPath = ltrim($target, '/');
-                    elseif (strpos($target, 'worksheets/') === 0) $sheetPath = 'xl/' . $target;
-                    else $sheetPath = 'xl/' . ltrim($target, '/');
-                    break;
-                }
-            }
-        }
-    }
-
     $sheetXml = $zip->getFromName($sheetPath);
-    if ($sheetXml === false) $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
     if ($sheetXml === false) respond(false, 'Unable to read first worksheet. Export the file as CSV.');
 
-    $sheet = xmlObject($sheetXml, 'Invalid worksheet XML. Export the file as CSV or save as .xlsx again.');
+    $sheet = xmlObject($sheetXml, 'Invalid worksheet XML. Export as CSV.');
     $rows = [];
-
     foreach ($sheet->sheetData->row as $rowNode) {
         $row = [];
         foreach ($rowNode->c as $cell) {
@@ -157,8 +120,6 @@ function readXlsxRows($path) {
             $ref = (string)$attrs['r'];
             $type = (string)$attrs['t'];
             $index = colIndex($ref);
-            $value = '';
-
             if ($type === 's') {
                 $sharedIndex = intval((string)$cell->v);
                 $value = $sharedStrings[$sharedIndex] ?? '';
@@ -169,10 +130,8 @@ function readXlsxRows($path) {
             } else {
                 $value = isset($cell->v) ? (string)$cell->v : '';
             }
-
             $row[$index] = $value;
         }
-
         if (!empty($row)) {
             ksort($row);
             $max = max(array_keys($row));
@@ -181,68 +140,11 @@ function readXlsxRows($path) {
             $rows[] = $full;
         }
     }
-
     $zip->close();
     return $rows;
 }
 
-function duplicateKeys($first, $last, $contact, $month, $day, $year) {
-    $first = strtolower(trim($first));
-    $last = strtolower(trim($last));
-    $contact = trim($contact);
-
-    $keys = [];
-    if ($contact !== '') $keys[] = 'contact|' . $first . '|' . $last . '|' . $contact;
-    $keys[] = 'bday|' . $first . '|' . $last . '|' . intval($month) . '|' . intval($day) . '|' . intval($year);
-    return $keys;
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, 'Invalid request method.');
-if (!isset($_FILES['import_file']) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK) respond(false, 'No file uploaded or upload failed.');
-
-$file = $_FILES['import_file'];
-$extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-if (!in_array($extension, ['csv', 'xlsx'])) respond(false, 'Please upload CSV or Excel .xlsx file.');
-
-$allRows = $extension === 'xlsx' ? readXlsxRows($file['tmp_name']) : readCsvRows($file['tmp_name']);
-if (count($allRows) < 1) respond(false, 'Uploaded file is empty.');
-
-$headers = array_shift($allRows);
-$cleanHeaders = array_map('cleanHeader', $headers);
-
-$getLast = $conn->query("SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number FROM beneficiaries WHERE beneficiary_code LIKE 'PAL-%'");
-$nextNumber = 1;
-if ($getLast && $getLast->num_rows > 0) {
-    $last = $getLast->fetch_assoc();
-    if ($last['last_number'] !== null) $nextNumber = intval($last['last_number']) + 1;
-}
-
-$existingKeys = [];
-$existing = $conn->query("SELECT first_name, last_name, contact_number, birthday_month, birthday_day, birthday_year FROM beneficiaries");
-if ($existing) {
-    while ($e = $existing->fetch_assoc()) {
-        foreach (duplicateKeys($e['first_name'], $e['last_name'], $e['contact_number'], $e['birthday_month'], $e['birthday_day'], $e['birthday_year']) as $key) {
-            $existingKeys[$key] = true;
-        }
-    }
-}
-
-$records = [];
-$seenImportKeys = [];
-$inserted = 0;
-$duplicates = 0;
-$failed = 0;
-$rowNumber = 1;
-$errors = [];
-
-foreach ($allRows as $data) {
-    $rowNumber++;
-    if ($rowNumber > MAX_IMPORT_ROWS + 1) { $errors[] = 'Import limit reached. Maximum rows: ' . MAX_IMPORT_ROWS; break; }
-    if (count(array_filter($data, fn($v) => trim((string)$v) !== '')) === 0) continue;
-
-    $row = [];
-    foreach ($cleanHeaders as $i => $header) $row[$header] = $data[$i] ?? '';
-
+function buildRecord($row, $rowNumber, &$failed, &$errors) {
     $first_name = valueFrom($row, ['first_name', 'firstname', 'given_name']);
     $middle_name = valueFrom($row, ['middle_name', 'middlename', 'middle_initial', 'mi']);
     $last_name = valueFrom($row, ['last_name', 'lastname', 'surname', 'family_name']);
@@ -265,52 +167,132 @@ foreach ($allRows as $data) {
 
     if ($first_name === '' || $last_name === '' || $birthday_month <= 0 || $birthday_day <= 0 || $birthday_year <= 0 || $sex === '' || $city_municipality === '' || $barangay === '' || $lgu === '') {
         $failed++;
-        $errors[] = "Row {$rowNumber}: missing or invalid required fields.";
-        continue;
+        if (count($errors) < 10) $errors[] = "Row {$rowNumber}: missing or invalid required fields.";
+        return null;
     }
 
-    $isDuplicate = false;
-    foreach (duplicateKeys($first_name, $last_name, $contact_number, $birthday_month, $birthday_day, $birthday_year) as $key) {
-        if (isset($existingKeys[$key]) || isset($seenImportKeys[$key])) {
-            $isDuplicate = true;
-            break;
-        }
-    }
-
-    if ($isDuplicate) {
-        $duplicates++;
-        continue;
-    }
-
-    foreach (duplicateKeys($first_name, $last_name, $contact_number, $birthday_month, $birthday_day, $birthday_year) as $key) {
-        $seenImportKeys[$key] = true;
-    }
-
-    $records[] = [$first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in];
+    return [$first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in];
 }
 
-if (count($records) === 0) {
-    respond(true, 'Import finished. No new valid records to insert.', ['inserted' => 0, 'duplicates' => $duplicates, 'failed' => $failed, 'errors' => array_slice($errors, 0, 10)]);
+function sqlValue($conn, $value) {
+    if ($value === null) return 'NULL';
+    return "'" . $conn->real_escape_string((string)$value) . "'";
 }
 
+function insertBatch($conn, $records, &$inserted, &$failed, &$errors) {
+    if (count($records) === 0) return;
+    $values = [];
+    foreach ($records as $r) {
+        $rowValues = [];
+        foreach ($r as $v) $rowValues[] = sqlValue($conn, $v);
+        $values[] = '(' . implode(',', $rowValues) . ')';
+    }
+
+    $sql = "INSERT INTO beneficiaries (beneficiary_code, first_name, middle_name, last_name, ext_name, contact_number, birthday_month, birthday_day, birthday_year, age, sex, lgu, national_id, household_id, program_type, region, province, city_municipality, barangay, sms_opt_in) VALUES " . implode(',', $values);
+
+    if ($conn->query($sql)) {
+        $inserted += count($records);
+    } else {
+        $failed += count($records);
+        if (count($errors) < 10) $errors[] = 'Batch insert failed: ' . $conn->error;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, 'Invalid request method.');
+if (!isset($_FILES['import_file']) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK) respond(false, 'No file uploaded or upload failed.');
+
+$file = $_FILES['import_file'];
+$extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+if (!in_array($extension, ['csv', 'xlsx'])) respond(false, 'Please upload CSV or Excel .xlsx file.');
+
+$getLast = $conn->query("SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number FROM beneficiaries WHERE beneficiary_code LIKE 'PAL-%'");
+$nextNumber = 1;
+if ($getLast && $getLast->num_rows > 0) {
+    $last = $getLast->fetch_assoc();
+    if ($last['last_number'] !== null) $nextNumber = intval($last['last_number']) + 1;
+}
+
+$existingKeys = [];
+$existing = $conn->query("SELECT first_name, last_name, contact_number, birthday_month, birthday_day, birthday_year FROM beneficiaries");
+if ($existing) {
+    while ($e = $existing->fetch_assoc()) {
+        foreach (duplicateKeys($e['first_name'], $e['last_name'], $e['contact_number'], $e['birthday_month'], $e['birthday_day'], $e['birthday_year']) as $key) $existingKeys[$key] = true;
+    }
+}
+
+$inserted = 0; $duplicates = 0; $failed = 0; $rowNumber = 1; $errors = [];
+$seenImportKeys = [];
+$batch = [];
 $conn->begin_transaction();
 
 try {
-    $insert = $conn->prepare("INSERT INTO beneficiaries (beneficiary_code, first_name, middle_name, last_name, ext_name, contact_number, birthday_month, birthday_day, birthday_year, age, sex, lgu, national_id, household_id, program_type, region, province, city_municipality, barangay, sms_opt_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if ($extension === 'csv') {
+        $handle = fopen($file['tmp_name'], 'r');
+        if (!$handle) respond(false, 'Unable to read uploaded CSV file.');
+        $headers = fgetcsv($handle);
+        if (!$headers) respond(false, 'CSV header row is missing.');
+        $cleanHeaders = array_map('cleanHeader', $headers);
 
-    foreach ($records as $r) {
-        $beneficiary_code = 'PAL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-        $nextNumber++;
+        while (($data = fgetcsv($handle)) !== false) {
+            $rowNumber++;
+            if ($rowNumber > MAX_IMPORT_ROWS + 1) { $errors[] = 'Import limit reached. Maximum rows: ' . MAX_IMPORT_ROWS; break; }
+            if (count(array_filter($data, fn($v) => trim((string)$v) !== '')) === 0) continue;
 
-        $insert->bind_param('ssssssiiiisssssssssi', $beneficiary_code, $r[0], $r[1], $r[2], $r[3], $r[4], $r[5], $r[6], $r[7], $r[8], $r[9], $r[10], $r[11], $r[12], $r[13], $r[14], $r[15], $r[16], $r[17], $r[18]);
+            $row = [];
+            foreach ($cleanHeaders as $i => $header) $row[$header] = $data[$i] ?? '';
+            $r = buildRecord($row, $rowNumber, $failed, $errors);
+            if (!$r) continue;
 
-        if ($insert->execute()) $inserted++;
-        else {
-            $failed++;
-            if (count($errors) < 10) $errors[] = 'Insert failed: ' . $conn->error;
+            $isDuplicate = false;
+            foreach (duplicateKeys($r[0], $r[2], $r[4], $r[5], $r[6], $r[7]) as $key) {
+                if (isset($existingKeys[$key]) || isset($seenImportKeys[$key])) { $isDuplicate = true; break; }
+            }
+            if ($isDuplicate) { $duplicates++; continue; }
+            foreach (duplicateKeys($r[0], $r[2], $r[4], $r[5], $r[6], $r[7]) as $key) $seenImportKeys[$key] = true;
+
+            $beneficiary_code = 'PAL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $nextNumber++;
+            array_unshift($r, $beneficiary_code);
+            $batch[] = $r;
+
+            if (count($batch) >= BATCH_SIZE) {
+                insertBatch($conn, $batch, $inserted, $failed, $errors);
+                $batch = [];
+            }
+        }
+        fclose($handle);
+    } else {
+        $allRows = readXlsxRows($file['tmp_name']);
+        if (count($allRows) < 1) respond(false, 'Uploaded file is empty.');
+        $headers = array_shift($allRows);
+        $cleanHeaders = array_map('cleanHeader', $headers);
+
+        foreach ($allRows as $data) {
+            $rowNumber++;
+            if ($rowNumber > MAX_IMPORT_ROWS + 1) { $errors[] = 'Import limit reached. Maximum rows: ' . MAX_IMPORT_ROWS; break; }
+            if (count(array_filter($data, fn($v) => trim((string)$v) !== '')) === 0) continue;
+            $row = [];
+            foreach ($cleanHeaders as $i => $header) $row[$header] = $data[$i] ?? '';
+            $r = buildRecord($row, $rowNumber, $failed, $errors);
+            if (!$r) continue;
+            $isDuplicate = false;
+            foreach (duplicateKeys($r[0], $r[2], $r[4], $r[5], $r[6], $r[7]) as $key) {
+                if (isset($existingKeys[$key]) || isset($seenImportKeys[$key])) { $isDuplicate = true; break; }
+            }
+            if ($isDuplicate) { $duplicates++; continue; }
+            foreach (duplicateKeys($r[0], $r[2], $r[4], $r[5], $r[6], $r[7]) as $key) $seenImportKeys[$key] = true;
+            $beneficiary_code = 'PAL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $nextNumber++;
+            array_unshift($r, $beneficiary_code);
+            $batch[] = $r;
+            if (count($batch) >= BATCH_SIZE) {
+                insertBatch($conn, $batch, $inserted, $failed, $errors);
+                $batch = [];
+            }
         }
     }
 
+    insertBatch($conn, $batch, $inserted, $failed, $errors);
     $conn->commit();
     respond(true, 'Import finished.', ['inserted' => $inserted, 'duplicates' => $duplicates, 'failed' => $failed, 'errors' => array_slice($errors, 0, 10)]);
 } catch (Exception $e) {
