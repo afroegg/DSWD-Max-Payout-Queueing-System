@@ -3,7 +3,7 @@ $current = basename($_SERVER['PHP_SELF']);
 ?>
 
 <aside class="sidebar">
-    <div class="logo">ADMIN</div>
+    <div class="logo">NAVIGATION</div>
 
     <nav>
         <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
