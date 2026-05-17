@@ -28,7 +28,9 @@ $lgu = trim($_POST['lgu'] ?? '');
 $national_id = trim($_POST['national_id'] ?? '');
 $household_id = trim($_POST['household_id'] ?? '');
 $program_type = trim($_POST['program_type'] ?? '');
-$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0); // used as PWD flag in kiosk
+$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0); // PWD flag
+$is_pregnant = intval($_POST['is_pregnant'] ?? 0);
+if ($sex !== 'Female') $is_pregnant = 0;
 
 function backTo($url) { header('Location: ' . $url); exit; }
 function kioskDone($code, $queue, $type, $duplicate = 0) {
@@ -46,8 +48,8 @@ function getNextBeneficiaryCode($conn) {
     return 'PAL-' . str_pad($n, 5, '0', STR_PAD_LEFT);
 }
 
-function createQueue($conn, $beneficiary_id, $age, $is_pwd) {
-    $priority = ($is_pwd == 1 || intval($age) >= 60);
+function createQueue($conn, $beneficiary_id, $age, $is_pwd, $is_pregnant) {
+    $priority = ($is_pwd == 1 || $is_pregnant == 1 || intval($age) >= 60);
     $queue_type = $priority ? 'priority' : 'regular';
     $prefix = $priority ? 'PRIO-' : 'PAL-';
     $start = $priority ? 6 : 5;
@@ -82,10 +84,10 @@ if ($first_name==='' || $last_name==='' || $birthday_month<=0 || $birthday_day<=
 if (!in_array($sex, ['Male','Female'])) backTo($backPage);
 
 if ($contact_number !== '') {
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND TRIM(contact_number)=TRIM(?) LIMIT 1");
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND TRIM(contact_number)=TRIM(?) LIMIT 1");
     $dup->bind_param('sss', $first_name, $last_name, $contact_number);
 } else {
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
     $dup->bind_param('ssiii', $first_name, $last_name, $birthday_month, $birthday_day, $birthday_year);
 }
 $dup->execute();
@@ -94,20 +96,20 @@ $dupResult = $dup->get_result();
 if ($dupResult && $dupResult->num_rows > 0) {
     $existing = $dupResult->fetch_assoc();
     if ($is_kiosk) {
-        [$qnum, $qtype] = createQueue($conn, intval($existing['id']), intval($existing['age']), intval($existing['sms_opt_in']));
+        [$qnum, $qtype] = createQueue($conn, intval($existing['id']), intval($existing['age']), intval($existing['sms_opt_in']), intval($existing['is_pregnant']));
         kioskDone($existing['beneficiary_code'] ?? 'Existing Record', $qnum, $qtype, 1);
     }
     backTo('../staff/verifier.php');
 }
 
 $beneficiary_code = getNextBeneficiaryCode($conn);
-$insert = $conn->prepare("INSERT INTO beneficiaries (beneficiary_code, first_name, middle_name, last_name, ext_name, contact_number, birthday_month, birthday_day, birthday_year, age, sex, lgu, national_id, household_id, program_type, region, province, city_municipality, barangay, sms_opt_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$insert->bind_param('ssssssiiiisssssssssi', $beneficiary_code, $first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in);
+$insert = $conn->prepare("INSERT INTO beneficiaries (beneficiary_code, first_name, middle_name, last_name, ext_name, contact_number, birthday_month, birthday_day, birthday_year, age, sex, lgu, national_id, household_id, program_type, region, province, city_municipality, barangay, sms_opt_in, is_pregnant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$insert->bind_param('ssssssiiiisssssssssii', $beneficiary_code, $first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in, $is_pregnant);
 
 if ($insert->execute()) {
     $beneficiary_id = $conn->insert_id;
     if ($is_kiosk) {
-        [$qnum, $qtype] = createQueue($conn, $beneficiary_id, $age, $sms_opt_in);
+        [$qnum, $qtype] = createQueue($conn, $beneficiary_id, $age, $sms_opt_in, $is_pregnant);
         kioskDone($beneficiary_code, $qnum, $qtype, 0);
     }
     backTo('../staff/verifier.php');
