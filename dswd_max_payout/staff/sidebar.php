@@ -34,6 +34,25 @@ function show(msg){if(!toast)return;toast.textContent=msg||'Done';toast.style.di
 window.alert=function(msg){show(msg)};
 document.addEventListener('click',function(e){var btn=e.target.closest('button,input[type=submit]');if(btn&&btn.form){btn.form.onsubmit=null;}},true);
 
+function installEmptyStateForStepTables(){
+    var path=window.location.pathname;
+    if(!path.includes('assessment_screen.php')&&!path.includes('confirmation_screen.php'))return;
+    var tbody=document.getElementById('rows');
+    if(!tbody)return;
+    var dataRows=tbody.querySelectorAll('tr.data');
+    if(dataRows.length===0&&!tbody.querySelector('.empty-state-row')){
+        tbody.innerHTML='<tr class="empty-state-row"><td colspan="9" class="empty-state">No beneficiaries found.</td></tr>';
+        var p=document.getElementById('p');
+        if(p)p.innerHTML='';
+        var info=document.getElementById('recordInfo');
+        if(info)info.textContent='Showing 0 of 0 filtered records (0 total)';
+        var last=document.getElementById('lastUpdated');
+        if(last)last.textContent='Last updated: '+new Date().toLocaleTimeString();
+    }
+}
+setInterval(installEmptyStateForStepTables,500);
+setTimeout(installEmptyStateForStepTables,300);
+
 function csvEscape(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function installVerifierHelpers(){
     if(!document.querySelector('.verifier-table')) return;
