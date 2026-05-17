@@ -6,42 +6,16 @@ $current = basename($_SERVER['PHP_SELF']);
     <div class="logo">NAVIGATION</div>
 
     <nav>
-        <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>">
-            <span class="material-icons">fact_check</span>
-            Verify
-        </a>
-
-        <a href="assessment_screen.php" class="<?php echo ($current === 'assessment_screen.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>">
-            <span class="material-icons">assignment</span>
-            Assessment
-        </a>
-
-        <a href="confirmation_screen.php" class="<?php echo $current === 'confirmation_screen.php' ? 'active' : ''; ?>">
-            <span class="material-icons">payments</span>
-            Confirmation
-        </a>
-
-        <a href="analytics.php" class="<?php echo $current === 'analytics.php' ? 'active' : ''; ?>">
-            <span class="material-icons">analytics</span>
-            Analytics
-        </a>
+        <a href="verifier.php" class="<?php echo $current === 'verifier.php' ? 'active' : ''; ?>"><span class="material-icons">fact_check</span>Verify</a>
+        <a href="assessment_screen.php" class="<?php echo ($current === 'assessment_screen.php' || $current === 'eligibility_form.php') ? 'active' : ''; ?>"><span class="material-icons">assignment</span>Assessment</a>
+        <a href="confirmation_screen.php" class="<?php echo $current === 'confirmation_screen.php' ? 'active' : ''; ?>"><span class="material-icons">payments</span>Confirmation</a>
+        <a href="analytics.php" class="<?php echo $current === 'analytics.php' ? 'active' : ''; ?>"><span class="material-icons">analytics</span>Analytics</a>
     </nav>
 
     <div class="sidebar-footer">
-        <a href="../kiosk/index.php" target="_blank">
-            <span class="material-icons">touch_app</span>
-            Kiosk
-        </a>
-
-        <a href="counter_display.php" target="_blank">
-            <span class="material-icons">desktop_windows</span>
-            Counter Display
-        </a>
-
-        <a href="../auth/logout.php">
-            <span class="material-icons">logout</span>
-            Logout
-        </a>
+        <a href="../kiosk/index.php" target="_blank"><span class="material-icons">touch_app</span>Kiosk</a>
+        <a href="counter_display.php" target="_blank"><span class="material-icons">desktop_windows</span>Counter Display</a>
+        <a href="../auth/logout.php"><span class="material-icons">logout</span>Logout</a>
     </div>
 </aside>
 
@@ -60,46 +34,37 @@ function show(msg){if(!toast)return;toast.textContent=msg||'Done';toast.style.di
 window.alert=function(msg){show(msg)};
 document.addEventListener('click',function(e){var btn=e.target.closest('button,input[type=submit]');if(btn&&btn.form){btn.form.onsubmit=null;}},true);
 
+function csvEscape(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function installVerifierHelpers(){
     if(!document.querySelector('.verifier-table')) return;
-
     window.downloadTemplate=function(){
+        var first=['Juan','Maria','Pedro','Elena','Jose','Ana','Carlo','Rosa','Miguel','Lorna','Paolo','Grace','Mark','Aileen','Ramon','Camille','Daryl','Jessa','Nestor','Clara'];
+        var middle=['Santos','Reyes','Cruz','Garcia','Lim','Mendoza','Flores','Aquino','Torres','Ramos'];
+        var last=['Dela Cruz','Reyes','Garcia','Santos','Mendoza','Flores','Villanueva','Bautista','Aquino','Ramos','Torres','Navarro','Castillo','Rivera','Morales'];
+        var addr=[
+            ['Region IV-A','Cavite','Imus City','Barangay Alapan I-A','Imus City'],['Region IV-A','Cavite','Imus City','Barangay Anabu I-A','Imus City'],['Region IV-A','Cavite','Imus City','Barangay Bucandala I','Imus City'],['Region IV-A','Cavite','Imus City','Barangay Malagasang I-A','Imus City'],
+            ['Region IV-A','Cavite','Bacoor City','Barangay Molino I','Bacoor City'],['Region IV-A','Cavite','Bacoor City','Barangay Molino II','Bacoor City'],['Region IV-A','Cavite','Bacoor City','Barangay Bayanan','Bacoor City'],['Region IV-A','Cavite','Bacoor City','Barangay Talaba I','Bacoor City'],
+            ['Region IV-A','Cavite','Dasmariñas City','Barangay Burol I','Dasmariñas City'],['Region IV-A','Cavite','Dasmariñas City','Barangay Langkaan I','Dasmariñas City'],['Region IV-A','Cavite','Dasmariñas City','Barangay Salawag','Dasmariñas City'],
+            ['Region IV-A','Cavite','General Trias City','Barangay Manggahan','General Trias City'],['Region IV-A','Cavite','General Trias City','Barangay San Francisco','General Trias City'],['Region IV-A','Cavite','General Trias City','Barangay Tejero','General Trias City']
+        ];
+        var ids=['PhilSys ID','Barangay Certificate','Senior Citizen ID','PWD ID','Voter ID','None'];
+        var programs=['AICS','AKAP','Emergency Assistance','Medical Assistance','Educational Assistance'];
         var csv='last_name,first_name,middle_name,ext_name,birthday,age,sex,contact_number,id_presented,household_id,region,province,city_municipality,barangay,lgu,program_type,pwd,pregnant\n';
-        csv+='Dela Cruz,Juan,Santos,,01/15/1980,44,Male,09171234567,PhilSys ID,HH-001,Region IV-A,Cavite,Imus City,Alapan I-A,Imus City,AICS,No,No\n';
-        csv+='Reyes,Maria,Luna,,03/12/1995,29,Female,09181234567,Barangay Certificate,HH-002,Region IV-A,Cavite,Imus City,Bucandala I,Imus City,AICS,No,Yes\n';
-        csv+='Garcia,Pedro,Lim,,05/08/1970,54,Male,09191234567,PWD ID,HH-003,Region IV-A,Cavite,Bacoor City,Molino I,Bacoor City,Medical Assistance,Yes,No\n';
-        csv+='Santos,Elena,Cruz,,06/20/1955,70,Female,09201234567,Senior Citizen ID,HH-004,Region IV-A,Cavite,Dasmarinas City,Salawag,Dasmarinas City,AICS,No,No\n';
-        var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-        var url=URL.createObjectURL(blob);
-        var a=document.createElement('a');
-        a.href=url;
-        a.download='beneficiary_import_template_pwd_pregnant.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        for(var i=1;i<=100;i++){
+            var sex=i%3===0?'Female':'Male';
+            var age=(i%10===0)?(60+(i%20)):(18+(i%42));
+            var pwd=i%17===0?'Yes':'No';
+            var pregnant=(sex==='Female'&&i%13===0)?'Yes':'No';
+            var a=addr[i%addr.length];
+            var row=[last[i%last.length],first[i%first.length],middle[i%middle.length],i%25===0?'Jr.':'',String((i%12)+1).padStart(2,'0')+'/'+String((i%28)+1).padStart(2,'0')+'/'+(new Date().getFullYear()-age),age,sex,'09'+String(170000000+i).slice(0,9),ids[i%ids.length],'HH-'+String(i).padStart(3,'0'),a[0],a[1],a[2],a[3],a[4],programs[i%programs.length],pwd,pregnant];
+            csv+=row.map(csvEscape).join(',')+'\n';
+        }
+        var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=url;a.download='beneficiary_import_template_100_complete_addresses.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
     };
-
-    window.manualRefresh=function(){
-        try{
-            if(typeof isLoading!=='undefined') isLoading=false;
-            if(typeof currentPage!=='undefined') currentPage=1;
-            if(typeof loadVerifierData==='function'){
-                loadVerifierData();
-                show('Verifier refreshed');
-            }else{
-                location.reload();
-            }
-        }catch(e){location.reload();}
-    };
-
-    document.querySelectorAll('.refresh-main,.icon-link').forEach(function(btn){
-        if(btn.dataset.refreshFixed==='1') return;
-        btn.dataset.refreshFixed='1';
-        btn.addEventListener('click',function(e){e.preventDefault();window.manualRefresh();},true);
-    });
+    window.manualRefresh=function(){try{if(typeof isLoading!=='undefined')isLoading=false;if(typeof currentPage!=='undefined')currentPage=1;if(typeof loadVerifierData==='function'){loadVerifierData();show('Verifier refreshed')}else location.reload()}catch(e){location.reload()}};
+    document.querySelectorAll('.refresh-main,.icon-link').forEach(function(btn){if(btn.dataset.refreshFixed==='1')return;btn.dataset.refreshFixed='1';btn.addEventListener('click',function(e){e.preventDefault();window.manualRefresh()},true)});
 }
-setInterval(installVerifierHelpers,500);
-setTimeout(installVerifierHelpers,1000);
+setInterval(installVerifierHelpers,500);setTimeout(installVerifierHelpers,1000);
 })();
 </script>
