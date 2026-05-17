@@ -325,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="system-label">
-            <h2>DSWD MAX PAYOUT</h2>
+            <h2>DSWD PAYOUT QUEUEING</h2>
             <p>Queueing and Monitoring System</p>
         </div>
     </div>
