@@ -2,20 +2,18 @@
 include('../auth/check.php');
 include('../config/db.php');
 
-$sql = "
-    SELECT q.queue_number, q.counter_number, q.table_number, q.workflow_status, q.called_at,
-           b.first_name, b.middle_name, b.last_name, b.ext_name
-    FROM queue_entries q
-    JOIN beneficiaries b ON b.id = q.beneficiary_id
-    WHERE DATE(q.transaction_date) = CURDATE()
-      AND q.workflow_status IN ('CALLED_STEP_2','CALLED_STEP_3')
-    ORDER BY q.called_at DESC, q.id DESC
-    LIMIT 8
-";
-$result = $conn->query($sql);
+function getRows($conn, $status) {
+    $stmt = $conn->prepare("SELECT q.queue_number, q.counter_number, q.table_number, q.called_at FROM queue_entries q WHERE DATE(q.transaction_date)=CURDATE() AND q.workflow_status=? ORDER BY q.called_at DESC, q.id DESC LIMIT 8");
+    $stmt->bind_param('s', $status);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+$assessment = getRows($conn, 'CALLED_STEP_2');
+$payout = getRows($conn, 'CALLED_STEP_3');
 
 function h($v){return htmlspecialchars($v ?? '', ENT_QUOTES, 'UTF-8');}
-function fullName($r){return trim(($r['last_name'] ?? '').', '.($r['first_name'] ?? '').' '.($r['middle_name'] ?? '').' '.($r['ext_name'] ?? ''));}
+function counterNo($r){return intval($r['counter_number'] ?: $r['table_number'] ?: 1);}
 ?>
 <!DOCTYPE html>
 <html>
@@ -23,47 +21,38 @@ function fullName($r){return trim(($r['last_name'] ?? '').', '.($r['first_name']
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Counter Display</title>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#081f4d;color:#fff;min-height:100vh;overflow:hidden}.screen{min-height:100vh;padding:28px;background:linear-gradient(135deg,#061a42,#0b2e83 55%,#168fcb)}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.title h1{margin:0;font-size:44px;letter-spacing:.5px}.title p{margin:6px 0 0;font-size:18px;opacity:.88}.clock{text-align:right;font-weight:900}.clock .time{font-size:42px}.clock .date{font-size:16px;opacity:.85}.now-card{background:rgba(255,255,255,.96);color:#0f172a;border-radius:28px;padding:34px;box-shadow:0 20px 60px rgba(0,0,0,.28);margin-bottom:22px}.now-label{font-size:22px;font-weight:900;color:#0b2e83;text-transform:uppercase;letter-spacing:1px}.now-row{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:center;margin-top:12px}.queue-big{font-size:88px;font-weight:1000;line-height:.95;color:#c2410c}.counter-big{font-size:62px;font-weight:1000;color:#0b2e83;text-align:right}.name{font-size:22px;color:#475569;font-weight:800;margin-top:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.mini{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:18px;padding:18px;min-height:148px;backdrop-filter:blur(6px)}.mini span{display:block;opacity:.8;font-size:12px;font-weight:900;text-transform:uppercase}.mini strong{display:block;font-size:34px;margin-top:8px}.mini b{display:block;font-size:18px;margin-top:8px;color:#dbeafe}.empty{height:55vh;display:flex;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:900;opacity:.85}.footer{position:fixed;left:28px;right:28px;bottom:18px;font-size:16px;opacity:.9;display:flex;justify-content:space-between}@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.queue-big{font-size:62px}.counter-big{font-size:44px}.title h1{font-size:34px}}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;background:#f2f5f9;color:#111827;overflow:hidden}.display{height:100vh;display:grid;grid-template-rows:1fr 46px}.boards{display:grid;grid-template-columns:1fr 1fr;height:100%;min-height:0}.panel{padding:34px 32px 20px;min-width:0}.panel:first-child{border-right:3px solid #111827}.title{font-size:42px;letter-spacing:12px;font-weight:1000;margin:6px 0 54px;text-transform:uppercase}.title.payout{letter-spacing:8px}.heads{display:grid;grid-template-columns:1fr 190px;gap:18px;font-size:28px;font-weight:1000;letter-spacing:3px;margin-bottom:14px}.rule{height:5px;background:#111827;margin-bottom:36px}.row{display:grid;grid-template-columns:1fr 190px;gap:18px;align-items:center;padding:10px 0 28px;margin-bottom:20px;border-bottom:1px solid #d9dee8}.qnum{font-size:56px;line-height:1;font-weight:1000;color:#0b2e83;letter-spacing:2px}.cnum{font-size:44px;line-height:1;font-weight:1000;color:#b91c1c;text-align:center}.empty{height:330px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:1000;color:#9ca3af;letter-spacing:3px}.footer{background:#0b2e83;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:18px;font-weight:1000;letter-spacing:1px}.footer span:last-child{font-size:17px}@media(max-width:1000px){.title{font-size:30px;letter-spacing:6px}.heads{font-size:20px;grid-template-columns:1fr 120px}.row{grid-template-columns:1fr 120px}.qnum{font-size:38px}.cnum{font-size:32px}.panel{padding:24px 18px}.footer{font-size:14px}}
 </style>
 </head>
 <body>
-<div class="screen">
-    <div class="header">
-        <div class="title"><h1>DSWD Queue Display</h1><p>Now Serving / Counter Monitor</p></div>
-        <div class="clock"><div class="time" id="time">--:--</div><div class="date" id="date">Loading...</div></div>
+<div class="display">
+    <div class="boards">
+        <section class="panel">
+            <h1 class="title">Assessment</h1>
+            <div class="heads"><div>Queueing Number</div><div>Counter</div></div>
+            <div class="rule"></div>
+            <?php if($assessment && $assessment->num_rows > 0): while($r=$assessment->fetch_assoc()): ?>
+                <div class="row"><div class="qnum"><?php echo h($r['queue_number']); ?></div><div class="cnum"><?php echo counterNo($r); ?></div></div>
+            <?php endwhile; else: ?>
+                <div class="empty">No Active Queue</div>
+            <?php endif; ?>
+        </section>
+        <section class="panel">
+            <h1 class="title payout">Payout / Release</h1>
+            <div class="heads"><div>Queueing Number</div><div>Counter</div></div>
+            <div class="rule"></div>
+            <?php if($payout && $payout->num_rows > 0): while($r=$payout->fetch_assoc()): ?>
+                <div class="row"><div class="qnum"><?php echo h($r['queue_number']); ?></div><div class="cnum"><?php echo counterNo($r); ?></div></div>
+            <?php endwhile; else: ?>
+                <div class="empty">No Active Queue</div>
+            <?php endif; ?>
+        </section>
     </div>
-
-    <?php
-    $rows = [];
-    if ($result) while($r = $result->fetch_assoc()) $rows[] = $r;
-    $now = $rows[0] ?? null;
-    ?>
-
-    <?php if($now): ?>
-    <div class="now-card">
-        <div class="now-label">Now Serving</div>
-        <div class="now-row">
-            <div>
-                <div class="queue-big"><?php echo h($now['queue_number']); ?></div>
-                <div class="name"><?php echo h(fullName($now)); ?></div>
-            </div>
-            <div class="counter-big">COUNTER <?php echo intval($now['counter_number'] ?: $now['table_number'] ?: 1); ?></div>
-        </div>
-    </div>
-    <div class="grid">
-        <?php foreach(array_slice($rows,1,8) as $r): ?>
-        <div class="mini"><span>Recently Called</span><strong><?php echo h($r['queue_number']); ?></strong><b>Counter <?php echo intval($r['counter_number'] ?: $r['table_number'] ?: 1); ?></b></div>
-        <?php endforeach; ?>
-    </div>
-    <?php else: ?>
-    <div class="empty">No queue currently called.</div>
-    <?php endif; ?>
+    <footer class="footer"><span>DSWD Max Payout Queueing and Monitoring System</span><span>Last updated: <b id="clock">--:--:--</b></span></footer>
 </div>
-<div class="footer"><span>Please wait for your queue number to be called.</span><span>Auto-refresh every 5 seconds</span></div>
 <script>
-function tick(){const d=new Date();document.getElementById('time').textContent=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([], {weekday:'long',year:'numeric',month:'long',day:'numeric'});}tick();setInterval(tick,1000);setTimeout(()=>location.reload(),5000);
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}tick();setInterval(tick,1000);setTimeout(()=>location.reload(),5000);
 </script>
 </body>
 </html>
