@@ -33,6 +33,11 @@ $current = basename($_SERVER['PHP_SELF']);
             Kiosk
         </a>
 
+        <a href="counter_display.php" target="_blank">
+            <span class="material-icons">desktop_windows</span>
+            Counter Display
+        </a>
+
         <a href="../auth/logout.php">
             <span class="material-icons">logout</span>
             Logout
@@ -54,46 +59,5 @@ var toast=document.getElementById('quickToast'),timer=null;
 function show(msg){if(!toast)return;toast.textContent=msg||'Done';toast.style.display='block';clearTimeout(timer);timer=setTimeout(function(){toast.style.display='none'},1200)}
 window.alert=function(msg){show(msg)};
 document.addEventListener('click',function(e){var btn=e.target.closest('button,input[type=submit]');if(btn&&btn.form){btn.form.onsubmit=null;}},true);
-
-function getVerifierRows(){try{if(typeof getFilteredRows==='function')return getFilteredRows();if(typeof beneficiaries!=='undefined')return beneficiaries;}catch(e){}return []}
-function getCategory(row){if(!row)return'Regular';if(parseInt(row.is_pwd||row.sms_opt_in||0)===1)return'PWD';if(parseInt(row.is_pregnant||0)===1)return'Pregnant';if(parseInt(row.age||0)>=60)return'Senior';return'Regular'}
-function categoryClass(cat){return cat==='PWD'?'cat-pwd':(cat==='Pregnant'?'cat-pregnant':(cat==='Senior'?'cat-senior':'cat-regular'))}
-function decorateVerifierCategories(){if(!document.querySelector('.verifier-table'))return;var filtered=getVerifierRows();var per=document.getElementById('rowsPerPage')?parseInt(document.getElementById('rowsPerPage').value,10):25;var page=1;try{if(typeof currentPage!=='undefined')page=currentPage}catch(e){}var visible=filtered.slice((page-1)*per,page*per);document.querySelectorAll('#beneficiaryRows tr').forEach(function(tr,i){var row=visible[i];if(!row||tr.dataset.catDone==='1')return;var cat=row.category||getCategory(row);var nameCell=tr.children[2];if(nameCell){nameCell.insertAdjacentHTML('beforeend','<span class="category-badge '+categoryClass(cat)+'">'+cat+'</span>')}tr.dataset.catDone='1'})}
-setInterval(decorateVerifierCategories,600);
-
-function autoAssignImportedQueues(){
-    if(!document.querySelector('.verifier-table'))return;
-    if(window.autoQueueRunning)return;
-    window.autoQueueRunning=true;
-    fetch('../api/auto_queue_unqueued.php',{method:'POST',cache:'no-store'})
-        .then(function(r){return r.json()})
-        .then(function(data){
-            if(data&&data.success&&parseInt(data.created||0)>0){
-                show('Auto queued '+data.created+' beneficiaries');
-                if(typeof loadVerifierData==='function')loadVerifierData();
-            }
-        })
-        .catch(function(){})
-        .finally(function(){window.autoQueueRunning=false});
-}
-setTimeout(autoAssignImportedQueues,1200);
-setInterval(autoAssignImportedQueues,15000);
-
-function enhanceImportAutoQueue(){
-    if(typeof uploadImportFile!=='function'||uploadImportFile._autoQueueEnhanced)return;
-    var oldUpload=uploadImportFile;
-    uploadImportFile=async function(){
-        await oldUpload();
-        setTimeout(autoAssignImportedQueues,700);
-        setTimeout(autoAssignImportedQueues,1800);
-    };
-    uploadImportFile._autoQueueEnhanced=true;
-}
-setInterval(enhanceImportAutoQueue,700);
-
-function enhanceDetailsModal(){if(typeof openDetailsModal!=='function'||openDetailsModal._enhanced)return;var oldOpen=openDetailsModal;openDetailsModal=function(id){oldOpen(id);setTimeout(function(){var grid=document.getElementById('detailsGrid');if(!grid||grid.dataset.priorityAdded==='1')return;var rows=[];try{if(typeof beneficiaries!=='undefined')rows=beneficiaries}catch(e){}var row=rows.find(function(item){return String(item.id)===String(id)});if(!row)return;var isPwd=parseInt(row.is_pwd||row.sms_opt_in||0)===1;var isPregnant=parseInt(row.is_pregnant||0)===1;var cat=row.category||getCategory(row);var isPriority=isPwd||isPregnant||parseInt(row.age||0)>=60||row.queue_type==='priority';var html='';html+='<div class="detail-item priority-detail"><span>Priority Category</span><strong>'+cat+'</strong></div>';html+='<div class="detail-item pwd-detail"><span>PWD Status</span><strong>'+(isPwd?'Yes - Priority':'No')+'</strong></div>';html+='<div class="detail-item pregnant-detail"><span>Pregnant Status</span><strong>'+(isPregnant?'Yes - Priority':'No')+'</strong></div>';html+='<div class="detail-item priority-detail"><span>Queue Priority</span><strong>'+(isPriority?'Priority Eligible':'Regular')+'</strong></div>';grid.insertAdjacentHTML('afterbegin',html);grid.dataset.priorityAdded='1'},40)};openDetailsModal._enhanced=true}
-setInterval(enhanceDetailsModal,500);
-
-setTimeout(function(){if(typeof window.downloadTemplate==='function'){window.downloadTemplate=function(){var csv='last_name,first_name,middle_name,ext_name,birthday,age,sex,contact_number,id_presented,household_id,region,province,city_municipality,barangay,lgu,program_type,pwd,pregnant\nDela Cruz,Juan,Santos,,01/15/1980,44,Male,09171234567,PhilSys ID,HH-001,Region IV-A,Cavite,Imus City,Alapan I-A,Imus City,AICS,No,No\nReyes,Maria,Luna,,03/12/1995,29,Female,09181234567,Barangay Certificate,HH-002,Region IV-A,Cavite,Imus City,Bucandala I,Imus City,AICS,No,Yes\nGarcia,Pedro,Lim,,05/08/1970,54,Male,09191234567,PWD ID,HH-003,Region IV-A,Cavite,Bacoor City,Molino I,Bacoor City,Medical Assistance,Yes,No\n';var blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='beneficiary_import_template_with_categories.csv';a.click();URL.revokeObjectURL(url)}}},1000);
 })();
 </script>
