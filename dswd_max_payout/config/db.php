@@ -69,4 +69,11 @@ if ($conn->connect_error) {
 }
 
 $conn->set_charset('utf8mb4');
+
+/*
+    Lightweight schema guard:
+    sms_opt_in is currently used as the PWD flag.
+    is_pregnant is added for pregnant priority beneficiaries.
+*/
+$conn->query("ALTER TABLE beneficiaries ADD COLUMN is_pregnant TINYINT(1) NOT NULL DEFAULT 0 AFTER sms_opt_in");
 ?>
