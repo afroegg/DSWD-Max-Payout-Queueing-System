@@ -10,11 +10,29 @@ $backPage = $is_kiosk ? '../kiosk/index.php' : '../staff/register_walkin.php';
 if (!$is_kiosk) include('../auth/check.php');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: {$backPage}"); exit; }
 
+function normalizeContactNumber($value) {
+    $value = trim((string)$value);
+    if ($value === '') return '';
+    $value = preg_replace('/[^0-9+]/', '', $value);
+    if (preg_match('/^09\d{9}$/', $value)) return $value;
+    if (preg_match('/^\+639\d{9}$/', $value)) return $value;
+    if (preg_match('/^639\d{9}$/', $value)) return '+' . $value;
+    return false;
+}
+
+function normalizeDswdHouseholdId($value) {
+    $value = strtoupper(trim((string)$value));
+    if ($value === '') return '';
+    $digits = preg_replace('/\D/', '', $value);
+    if ($digits === '' || strlen($digits) > 10) return false;
+    return 'HH-' . str_pad($digits, 10, '0', STR_PAD_LEFT);
+}
+
 $first_name = trim($_POST['first_name'] ?? '');
 $middle_name = trim($_POST['middle_name'] ?? '');
 $last_name = trim($_POST['last_name'] ?? '');
 $ext_name = trim($_POST['ext_name'] ?? '');
-$contact_number = trim($_POST['contact_number'] ?? '');
+$contact_number = normalizeContactNumber($_POST['contact_number'] ?? '');
 $birthday_month = intval($_POST['birthday_month'] ?? 0);
 $birthday_day = intval($_POST['birthday_day'] ?? 0);
 $birthday_year = intval($_POST['birthday_year'] ?? 0);
@@ -26,7 +44,7 @@ $city_municipality = trim($_POST['city_municipality'] ?? '');
 $barangay = trim($_POST['barangay'] ?? '');
 $lgu = trim($_POST['lgu'] ?? '');
 $national_id = trim($_POST['national_id'] ?? '');
-$household_id = trim($_POST['household_id'] ?? '');
+$household_id = normalizeDswdHouseholdId($_POST['household_id'] ?? '');
 $program_type = trim($_POST['program_type'] ?? '');
 $sms_opt_in = intval($_POST['sms_opt_in'] ?? 0); // PWD flag
 $is_pregnant = intval($_POST['is_pregnant'] ?? 0);
@@ -80,6 +98,7 @@ function createQueue($conn, $beneficiary_id, $age, $is_pwd, $is_pregnant) {
     return [$queue_number, $queue_type];
 }
 
+if ($contact_number === false || $household_id === false) backTo($backPage);
 if ($first_name==='' || $last_name==='' || $birthday_month<=0 || $birthday_day<=0 || $birthday_year<=0 || $age<0 || $sex==='' || $region==='' || $province==='' || $city_municipality==='' || $barangay==='' || $lgu==='' || $program_type==='') backTo($backPage);
 if (!in_array($sex, ['Male','Female'])) backTo($backPage);
 
