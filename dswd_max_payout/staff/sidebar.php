@@ -59,5 +59,47 @@ var toast=document.getElementById('quickToast'),timer=null;
 function show(msg){if(!toast)return;toast.textContent=msg||'Done';toast.style.display='block';clearTimeout(timer);timer=setTimeout(function(){toast.style.display='none'},1200)}
 window.alert=function(msg){show(msg)};
 document.addEventListener('click',function(e){var btn=e.target.closest('button,input[type=submit]');if(btn&&btn.form){btn.form.onsubmit=null;}},true);
+
+function installVerifierHelpers(){
+    if(!document.querySelector('.verifier-table')) return;
+
+    window.downloadTemplate=function(){
+        var csv='last_name,first_name,middle_name,ext_name,birthday,age,sex,contact_number,id_presented,household_id,region,province,city_municipality,barangay,lgu,program_type,pwd,pregnant\n';
+        csv+='Dela Cruz,Juan,Santos,,01/15/1980,44,Male,09171234567,PhilSys ID,HH-001,Region IV-A,Cavite,Imus City,Alapan I-A,Imus City,AICS,No,No\n';
+        csv+='Reyes,Maria,Luna,,03/12/1995,29,Female,09181234567,Barangay Certificate,HH-002,Region IV-A,Cavite,Imus City,Bucandala I,Imus City,AICS,No,Yes\n';
+        csv+='Garcia,Pedro,Lim,,05/08/1970,54,Male,09191234567,PWD ID,HH-003,Region IV-A,Cavite,Bacoor City,Molino I,Bacoor City,Medical Assistance,Yes,No\n';
+        csv+='Santos,Elena,Cruz,,06/20/1955,70,Female,09201234567,Senior Citizen ID,HH-004,Region IV-A,Cavite,Dasmarinas City,Salawag,Dasmarinas City,AICS,No,No\n';
+        var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url;
+        a.download='beneficiary_import_template_pwd_pregnant.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    window.manualRefresh=function(){
+        try{
+            if(typeof isLoading!=='undefined') isLoading=false;
+            if(typeof currentPage!=='undefined') currentPage=1;
+            if(typeof loadVerifierData==='function'){
+                loadVerifierData();
+                show('Verifier refreshed');
+            }else{
+                location.reload();
+            }
+        }catch(e){location.reload();}
+    };
+
+    document.querySelectorAll('.refresh-main,.icon-link').forEach(function(btn){
+        if(btn.dataset.refreshFixed==='1') return;
+        btn.dataset.refreshFixed='1';
+        btn.addEventListener('click',function(e){e.preventDefault();window.manualRefresh();},true);
+    });
+}
+setInterval(installVerifierHelpers,500);
+setTimeout(installVerifierHelpers,1000);
 })();
 </script>
