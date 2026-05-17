@@ -1,3 +1,13 @@
 <?php
-define('BASE_URL', 'https://dswd-max-payout-queueing-system.onrender.com');
-define('SEMAPHORE_API_KEY', 'PUT_YOUR_SEMAPHORE_API_KEY_HERE');
+$defaultBase = 'http://localhost/dswd_max_payout';
+$envBase = getenv('APP_BASE_URL');
+
+if ($envBase !== false && trim($envBase) !== '') {
+    define('BASE_URL', rtrim(trim($envBase), '/'));
+} else {
+    define('BASE_URL', $defaultBase);
+}
+
+$envSemaphore = getenv('SEMAPHORE_API_KEY');
+define('SEMAPHORE_API_KEY', ($envSemaphore !== false && trim($envSemaphore) !== '') ? trim($envSemaphore) : '');
+?>
