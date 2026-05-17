@@ -6,16 +6,9 @@ date_default_timezone_set('Asia/Manila');
 $source = trim($_POST['source'] ?? 'admin');
 $is_kiosk = ($source === 'kiosk');
 $backPage = $is_kiosk ? '../kiosk/index.php' : '../staff/register_walkin.php';
-$successPage = $is_kiosk ? '../kiosk/index.php' : '../staff/verifier.php';
 
-if (!$is_kiosk) {
-    include('../auth/check.php');
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: {$backPage}");
-    exit;
-}
+if (!$is_kiosk) include('../auth/check.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: {$backPage}"); exit; }
 
 $first_name = trim($_POST['first_name'] ?? '');
 $middle_name = trim($_POST['middle_name'] ?? '');
@@ -35,164 +28,90 @@ $lgu = trim($_POST['lgu'] ?? '');
 $national_id = trim($_POST['national_id'] ?? '');
 $household_id = trim($_POST['household_id'] ?? '');
 $program_type = trim($_POST['program_type'] ?? '');
-$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0);
+$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0); // used as PWD flag in kiosk
 
-function redirectBack($message, $backPage) {
-    $safeMessage = addslashes($message);
-    echo "<script>
-        alert('{$safeMessage}');
-        window.location.href = '{$backPage}';
-    </script>";
+function backTo($url) { header('Location: ' . $url); exit; }
+function kioskDone($code, $queue, $type, $duplicate = 0) {
+    header('Location: ../kiosk/index.php?success=1&code=' . urlencode($code) . '&queue=' . urlencode($queue) . '&type=' . urlencode($type) . '&duplicate=' . intval($duplicate));
     exit;
 }
 
-if (
-    $first_name === '' ||
-    $last_name === '' ||
-    $birthday_month <= 0 ||
-    $birthday_day <= 0 ||
-    $birthday_year <= 0 ||
-    $age < 0 ||
-    $sex === '' ||
-    $region === '' ||
-    $province === '' ||
-    $city_municipality === '' ||
-    $barangay === '' ||
-    $lgu === '' ||
-    $program_type === ''
-) {
-    redirectBack('Please complete all required fields.', $backPage);
+function getNextBeneficiaryCode($conn) {
+    $res = $conn->query("SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number FROM beneficiaries WHERE beneficiary_code LIKE 'PAL-%'");
+    $n = 1;
+    if ($res && $res->num_rows > 0) {
+        $r = $res->fetch_assoc();
+        if ($r['last_number'] !== null) $n = intval($r['last_number']) + 1;
+    }
+    return 'PAL-' . str_pad($n, 5, '0', STR_PAD_LEFT);
 }
 
-if (!in_array($sex, ['Male', 'Female'])) {
-    redirectBack('Invalid sex selected.', $backPage);
+function createQueue($conn, $beneficiary_id, $age, $is_pwd) {
+    $priority = ($is_pwd == 1 || intval($age) >= 60);
+    $queue_type = $priority ? 'priority' : 'regular';
+    $prefix = $priority ? 'PRIO-' : 'PAL-';
+    $start = $priority ? 6 : 5;
+
+    $check = $conn->prepare("SELECT queue_number, queue_type FROM queue_entries WHERE beneficiary_id=? AND DATE(transaction_date)=CURDATE() AND (workflow_status IS NULL OR workflow_status!='CANCELLED') ORDER BY id DESC LIMIT 1");
+    $check->bind_param('i', $beneficiary_id);
+    $check->execute();
+    $active = $check->get_result();
+    if ($active && $active->num_rows > 0) {
+        $row = $active->fetch_assoc();
+        return [$row['queue_number'], $row['queue_type']];
+    }
+
+    $last = $conn->prepare("SELECT MAX(CAST(SUBSTRING(queue_number, ?) AS UNSIGNED)) AS last_number FROM queue_entries WHERE DATE(transaction_date)=CURDATE() AND queue_type=? AND queue_number LIKE CONCAT(?, '%')");
+    $last->bind_param('iss', $start, $queue_type, $prefix);
+    $last->execute();
+    $res = $last->get_result();
+    $next = 1;
+    if ($res && $res->num_rows > 0) {
+        $r = $res->fetch_assoc();
+        if ($r['last_number'] !== null) $next = intval($r['last_number']) + 1;
+    }
+
+    $queue_number = $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+    $ins = $conn->prepare("INSERT INTO queue_entries (queue_number, queue_type, beneficiary_id, transaction_date, status, workflow_status, table_number, called_at, assessed_at, paid_at) VALUES (?, ?, ?, CURDATE(), 'waiting', 'WAITING_STEP_2', NULL, NULL, NULL, NULL)");
+    $ins->bind_param('ssi', $queue_number, $queue_type, $beneficiary_id);
+    $ins->execute();
+    return [$queue_number, $queue_type];
 }
 
-if ($birthday_month < 1 || $birthday_month > 12 || $birthday_day < 1 || $birthday_day > 31) {
-    redirectBack('Invalid birthday.', $backPage);
-}
+if ($first_name==='' || $last_name==='' || $birthday_month<=0 || $birthday_day<=0 || $birthday_year<=0 || $age<0 || $sex==='' || $region==='' || $province==='' || $city_municipality==='' || $barangay==='' || $lgu==='' || $program_type==='') backTo($backPage);
+if (!in_array($sex, ['Male','Female'])) backTo($backPage);
 
 if ($contact_number !== '') {
-    $dup = $conn->prepare("
-        SELECT id, beneficiary_code
-        FROM beneficiaries
-        WHERE LOWER(TRIM(first_name)) = LOWER(TRIM(?))
-          AND LOWER(TRIM(last_name)) = LOWER(TRIM(?))
-          AND TRIM(contact_number) = TRIM(?)
-        LIMIT 1
-    ");
-    $dup->bind_param("sss", $first_name, $last_name, $contact_number);
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND TRIM(contact_number)=TRIM(?) LIMIT 1");
+    $dup->bind_param('sss', $first_name, $last_name, $contact_number);
 } else {
-    $dup = $conn->prepare("
-        SELECT id, beneficiary_code
-        FROM beneficiaries
-        WHERE LOWER(TRIM(first_name)) = LOWER(TRIM(?))
-          AND LOWER(TRIM(last_name)) = LOWER(TRIM(?))
-          AND birthday_month = ?
-          AND birthday_day = ?
-          AND birthday_year = ?
-        LIMIT 1
-    ");
-    $dup->bind_param("ssiii", $first_name, $last_name, $birthday_month, $birthday_day, $birthday_year);
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
+    $dup->bind_param('ssiii', $first_name, $last_name, $birthday_month, $birthday_day, $birthday_year);
 }
-
 $dup->execute();
 $dupResult = $dup->get_result();
 
 if ($dupResult && $dupResult->num_rows > 0) {
     $existing = $dupResult->fetch_assoc();
-    $code = urlencode($existing['beneficiary_code'] ?? 'Existing Record');
-
     if ($is_kiosk) {
-        header("Location: ../kiosk/index.php?success=1&duplicate=1&code={$code}");
-        exit;
+        [$qnum, $qtype] = createQueue($conn, intval($existing['id']), intval($existing['age']), intval($existing['sms_opt_in']));
+        kioskDone($existing['beneficiary_code'] ?? 'Existing Record', $qnum, $qtype, 1);
     }
-
-    redirectBack('Duplicate beneficiary record found. Existing Code: ' . ($existing['beneficiary_code'] ?? 'Existing Record'), '../staff/verifier.php');
+    backTo('../staff/verifier.php');
 }
 
-$getLast = $conn->query("
-    SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number
-    FROM beneficiaries
-    WHERE beneficiary_code LIKE 'PAL-%'
-");
-
-$nextNumber = 1;
-
-if ($getLast && $getLast->num_rows > 0) {
-    $row = $getLast->fetch_assoc();
-    if ($row['last_number'] !== null) {
-        $nextNumber = intval($row['last_number']) + 1;
-    }
-}
-
-$beneficiary_code = 'PAL-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-$insert = $conn->prepare("
-    INSERT INTO beneficiaries (
-        beneficiary_code,
-        first_name,
-        middle_name,
-        last_name,
-        ext_name,
-        contact_number,
-        birthday_month,
-        birthday_day,
-        birthday_year,
-        age,
-        sex,
-        lgu,
-        national_id,
-        household_id,
-        program_type,
-        region,
-        province,
-        city_municipality,
-        barangay,
-        sms_opt_in
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-");
-
-$insert->bind_param(
-    "ssssssiiiisssssssssi",
-    $beneficiary_code,
-    $first_name,
-    $middle_name,
-    $last_name,
-    $ext_name,
-    $contact_number,
-    $birthday_month,
-    $birthday_day,
-    $birthday_year,
-    $age,
-    $sex,
-    $lgu,
-    $national_id,
-    $household_id,
-    $program_type,
-    $region,
-    $province,
-    $city_municipality,
-    $barangay,
-    $sms_opt_in
-);
+$beneficiary_code = getNextBeneficiaryCode($conn);
+$insert = $conn->prepare("INSERT INTO beneficiaries (beneficiary_code, first_name, middle_name, last_name, ext_name, contact_number, birthday_month, birthday_day, birthday_year, age, sex, lgu, national_id, household_id, program_type, region, province, city_municipality, barangay, sms_opt_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$insert->bind_param('ssssssiiiisssssssssi', $beneficiary_code, $first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in);
 
 if ($insert->execute()) {
-    $code = urlencode($beneficiary_code);
-
+    $beneficiary_id = $conn->insert_id;
     if ($is_kiosk) {
-        header("Location: ../kiosk/index.php?success=1&code={$code}");
-        exit;
+        [$qnum, $qtype] = createQueue($conn, $beneficiary_id, $age, $sms_opt_in);
+        kioskDone($beneficiary_code, $qnum, $qtype, 0);
     }
-
-    echo "<script>
-        alert('Beneficiary record saved successfully. Code: {$beneficiary_code}');
-        window.location.href = '../staff/verifier.php';
-    </script>";
-    exit;
+    backTo('../staff/verifier.php');
 }
 
-$error = addslashes($conn->error);
-redirectBack('Failed to save beneficiary record. Error: ' . $error, $backPage);
+backTo($backPage);
 ?>
