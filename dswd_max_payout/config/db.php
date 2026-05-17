@@ -1,20 +1,4 @@
 <?php
-/*
-    Database connection for Render/Railway and local XAMPP.
-
-    Recommended Render environment variables:
-    DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT
-
-    Also supported Railway variable names:
-    MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLPORT
-
-    Also supported URL variables:
-    MYSQL_URL or DATABASE_URL
-
-    Local XAMPP fallback:
-    localhost, root, empty password, dswd_max_payout, 3306
-*/
-
 function env_value($names) {
     foreach ($names as $name) {
         $value = getenv($name);
@@ -52,7 +36,7 @@ $is_render = getenv('RENDER') || getenv('RENDER_SERVICE_ID') || getenv('RENDER_E
 
 if ($db_host === '' || $db_user === '' || $db_name === '' || $db_port === '') {
     if ($is_render) {
-        die('Database config missing. In Render Environment, add DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT. You may also use Railway MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLPORT, or MYSQL_URL. Do not use mysql.railway.internal on Render. Use Railway public TCP proxy host and port.');
+        die('Database config missing. Add database environment variables in Render.');
     }
 
     $db_host = 'localhost';
@@ -70,10 +54,9 @@ if ($conn->connect_error) {
 
 $conn->set_charset('utf8mb4');
 
-/*
-    Lightweight schema guard:
-    sms_opt_in is currently used as the PWD flag.
-    is_pregnant is added for pregnant priority beneficiaries.
-*/
-$conn->query("ALTER TABLE beneficiaries ADD COLUMN is_pregnant TINYINT(1) NOT NULL DEFAULT 0 AFTER sms_opt_in");
+$columnCheck = $conn->query("SHOW COLUMNS FROM beneficiaries LIKE 'is_pregnant'");
+
+if ($columnCheck && $columnCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE beneficiaries ADD COLUMN is_pregnant TINYINT(1) NOT NULL DEFAULT 0 AFTER sms_opt_in");
+}
 ?>
