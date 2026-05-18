@@ -1,9 +1,17 @@
 <?php
-$host = 'localhost';
-$user = 'root';
-$pwd = '';
-$database = 'railway';
-$port = 3306;
+function get_env_value($key, $default = '') {
+    $value = getenv($key);
+    if ($value === false || trim($value) === '') {
+        return $default;
+    }
+    return trim($value);
+}
+
+$host = get_env_value('DB_HOST', 'localhost');
+$user = get_env_value('DB_USER', 'root');
+$pwd = get_env_value('DB_PASS', '');
+$database = get_env_value('DB_NAME', 'railway');
+$port = intval(get_env_value('DB_PORT', '3306'));
 
 $conn = new mysqli($host, $user, $pwd, $database, $port);
 
