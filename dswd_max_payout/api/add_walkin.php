@@ -20,12 +20,34 @@ function normalizeContactNumber($value) {
     return false;
 }
 
+function contactVariants($value) {
+    $value = normalizeContactNumber($value);
+    if ($value === false || $value === '') return [];
+    if (preg_match('/^09\d{9}$/', $value)) {
+        return [$value, '+63' . substr($value, 1), '63' . substr($value, 1)];
+    }
+    if (preg_match('/^\+639\d{9}$/', $value)) {
+        return [$value, '0' . substr($value, 3), substr($value, 1)];
+    }
+    return [$value];
+}
+
 function normalizeDswdHouseholdId($value) {
     $value = strtoupper(trim((string)$value));
     if ($value === '') return '';
     $digits = preg_replace('/\D/', '', $value);
     if ($digits === '' || strlen($digits) > 10) return false;
     return 'HH-' . str_pad($digits, 10, '0', STR_PAD_LEFT);
+}
+
+function backTo($url) { header('Location: ' . $url); exit; }
+function kioskDuplicate($reason, $code = '') {
+    header('Location: ../kiosk/index.php?duplicate=1&reason=' . urlencode($reason) . '&code=' . urlencode($code));
+    exit;
+}
+function kioskDone($code, $queue, $type, $duplicate = 0) {
+    header('Location: ../kiosk/index.php?success=1&code=' . urlencode($code) . '&queue=' . urlencode($queue) . '&type=' . urlencode($type) . '&duplicate=' . intval($duplicate));
+    exit;
 }
 
 $first_name = trim($_POST['first_name'] ?? '');
@@ -46,15 +68,9 @@ $lgu = trim($_POST['lgu'] ?? '');
 $national_id = trim($_POST['national_id'] ?? '');
 $household_id = normalizeDswdHouseholdId($_POST['household_id'] ?? '');
 $program_type = trim($_POST['program_type'] ?? '');
-$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0); // PWD flag
+$sms_opt_in = intval($_POST['sms_opt_in'] ?? 0);
 $is_pregnant = intval($_POST['is_pregnant'] ?? 0);
 if ($sex !== 'Female') $is_pregnant = 0;
-
-function backTo($url) { header('Location: ' . $url); exit; }
-function kioskDone($code, $queue, $type, $duplicate = 0) {
-    header('Location: ../kiosk/index.php?success=1&code=' . urlencode($code) . '&queue=' . urlencode($queue) . '&type=' . urlencode($type) . '&duplicate=' . intval($duplicate));
-    exit;
-}
 
 function getNextBeneficiaryCode($conn) {
     $res = $conn->query("SELECT MAX(CAST(SUBSTRING(beneficiary_code, 5) AS UNSIGNED)) AS last_number FROM beneficiaries WHERE beneficiary_code LIKE 'PAL-%'");
@@ -102,22 +118,35 @@ if ($contact_number === false || $household_id === false) backTo($backPage);
 if ($first_name==='' || $last_name==='' || $birthday_month<=0 || $birthday_day<=0 || $birthday_year<=0 || $age<0 || $sex==='' || $region==='' || $province==='' || $city_municipality==='' || $barangay==='' || $lgu==='' || $program_type==='') backTo($backPage);
 if (!in_array($sex, ['Male','Female'])) backTo($backPage);
 
+$dupResult = null;
 if ($contact_number !== '') {
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND TRIM(contact_number)=TRIM(?) LIMIT 1");
-    $dup->bind_param('sss', $first_name, $last_name, $contact_number);
-} else {
+    $variants = contactVariants($contact_number);
+    $c1 = $variants[0] ?? $contact_number;
+    $c2 = $variants[1] ?? $contact_number;
+    $c3 = $variants[2] ?? $contact_number;
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE TRIM(contact_number) IN (?, ?, ?) LIMIT 1");
+    $dup->bind_param('sss', $c1, $c2, $c3);
+    $dup->execute();
+    $dupResult = $dup->get_result();
+}
+
+if ((!$dupResult || $dupResult->num_rows === 0) && $household_id !== '') {
+    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE TRIM(household_id)=TRIM(?) LIMIT 1");
+    $dup->bind_param('s', $household_id);
+    $dup->execute();
+    $dupResult = $dup->get_result();
+}
+
+if (!$dupResult || $dupResult->num_rows === 0) {
     $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
     $dup->bind_param('ssiii', $first_name, $last_name, $birthday_month, $birthday_day, $birthday_year);
+    $dup->execute();
+    $dupResult = $dup->get_result();
 }
-$dup->execute();
-$dupResult = $dup->get_result();
 
 if ($dupResult && $dupResult->num_rows > 0) {
     $existing = $dupResult->fetch_assoc();
-    if ($is_kiosk) {
-        [$qnum, $qtype] = createQueue($conn, intval($existing['id']), intval($existing['age']), intval($existing['sms_opt_in']), intval($existing['is_pregnant']));
-        kioskDone($existing['beneficiary_code'] ?? 'Existing Record', $qnum, $qtype, 1);
-    }
+    if ($is_kiosk) kioskDuplicate('Duplicate beneficiary already exists in verifier.', $existing['beneficiary_code'] ?? '');
     backTo('../staff/verifier.php');
 }
 
