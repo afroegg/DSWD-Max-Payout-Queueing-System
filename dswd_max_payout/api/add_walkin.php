@@ -23,12 +23,8 @@ function normalizeContactNumber($value) {
 function contactVariants($value) {
     $value = normalizeContactNumber($value);
     if ($value === false || $value === '') return [];
-    if (preg_match('/^09\d{9}$/', $value)) {
-        return [$value, '+63' . substr($value, 1), '63' . substr($value, 1)];
-    }
-    if (preg_match('/^\+639\d{9}$/', $value)) {
-        return [$value, '0' . substr($value, 3), substr($value, 1)];
-    }
+    if (preg_match('/^09\d{9}$/', $value)) return [$value, '+63' . substr($value, 1), '63' . substr($value, 1)];
+    if (preg_match('/^\+639\d{9}$/', $value)) return [$value, '0' . substr($value, 3), substr($value, 1)];
     return [$value];
 }
 
@@ -45,8 +41,8 @@ function kioskDuplicate($reason, $code = '') {
     header('Location: ../kiosk/index.php?duplicate=1&reason=' . urlencode($reason) . '&code=' . urlencode($code));
     exit;
 }
-function kioskDone($code, $queue, $type, $duplicate = 0) {
-    header('Location: ../kiosk/index.php?success=1&code=' . urlencode($code) . '&queue=' . urlencode($queue) . '&type=' . urlencode($type) . '&duplicate=' . intval($duplicate));
+function kioskRegistered($code) {
+    header('Location: ../kiosk/index.php?registered=1&code=' . urlencode($code));
     exit;
 }
 
@@ -82,38 +78,6 @@ function getNextBeneficiaryCode($conn) {
     return 'PAL-' . str_pad($n, 5, '0', STR_PAD_LEFT);
 }
 
-function createQueue($conn, $beneficiary_id, $age, $is_pwd, $is_pregnant) {
-    $priority = ($is_pwd == 1 || $is_pregnant == 1 || intval($age) >= 60);
-    $queue_type = $priority ? 'priority' : 'regular';
-    $prefix = $priority ? 'PRIO-' : 'PAL-';
-    $start = $priority ? 6 : 5;
-
-    $check = $conn->prepare("SELECT queue_number, queue_type FROM queue_entries WHERE beneficiary_id=? AND DATE(transaction_date)=CURDATE() AND (workflow_status IS NULL OR workflow_status!='CANCELLED') ORDER BY id DESC LIMIT 1");
-    $check->bind_param('i', $beneficiary_id);
-    $check->execute();
-    $active = $check->get_result();
-    if ($active && $active->num_rows > 0) {
-        $row = $active->fetch_assoc();
-        return [$row['queue_number'], $row['queue_type']];
-    }
-
-    $last = $conn->prepare("SELECT MAX(CAST(SUBSTRING(queue_number, ?) AS UNSIGNED)) AS last_number FROM queue_entries WHERE DATE(transaction_date)=CURDATE() AND queue_type=? AND queue_number LIKE CONCAT(?, '%')");
-    $last->bind_param('iss', $start, $queue_type, $prefix);
-    $last->execute();
-    $res = $last->get_result();
-    $next = 1;
-    if ($res && $res->num_rows > 0) {
-        $r = $res->fetch_assoc();
-        if ($r['last_number'] !== null) $next = intval($r['last_number']) + 1;
-    }
-
-    $queue_number = $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
-    $ins = $conn->prepare("INSERT INTO queue_entries (queue_number, queue_type, beneficiary_id, transaction_date, status, workflow_status, table_number, called_at, assessed_at, paid_at) VALUES (?, ?, ?, CURDATE(), 'waiting', 'WAITING_STEP_2', NULL, NULL, NULL, NULL)");
-    $ins->bind_param('ssi', $queue_number, $queue_type, $beneficiary_id);
-    $ins->execute();
-    return [$queue_number, $queue_type];
-}
-
 if ($contact_number === false || $household_id === false) backTo($backPage);
 if ($first_name==='' || $last_name==='' || $birthday_month<=0 || $birthday_day<=0 || $birthday_year<=0 || $age<0 || $sex==='' || $region==='' || $province==='' || $city_municipality==='' || $barangay==='' || $lgu==='' || $program_type==='') backTo($backPage);
 if (!in_array($sex, ['Male','Female'])) backTo($backPage);
@@ -124,26 +88,23 @@ if ($contact_number !== '') {
     $c1 = $variants[0] ?? $contact_number;
     $c2 = $variants[1] ?? $contact_number;
     $c3 = $variants[2] ?? $contact_number;
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE TRIM(contact_number) IN (?, ?, ?) LIMIT 1");
+    $dup = $conn->prepare("SELECT id, beneficiary_code FROM beneficiaries WHERE TRIM(contact_number) IN (?, ?, ?) LIMIT 1");
     $dup->bind_param('sss', $c1, $c2, $c3);
     $dup->execute();
     $dupResult = $dup->get_result();
 }
-
 if ((!$dupResult || $dupResult->num_rows === 0) && $household_id !== '') {
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE TRIM(household_id)=TRIM(?) LIMIT 1");
+    $dup = $conn->prepare("SELECT id, beneficiary_code FROM beneficiaries WHERE TRIM(household_id)=TRIM(?) LIMIT 1");
     $dup->bind_param('s', $household_id);
     $dup->execute();
     $dupResult = $dup->get_result();
 }
-
 if (!$dupResult || $dupResult->num_rows === 0) {
-    $dup = $conn->prepare("SELECT id, beneficiary_code, age, sms_opt_in, is_pregnant FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
+    $dup = $conn->prepare("SELECT id, beneficiary_code FROM beneficiaries WHERE LOWER(TRIM(first_name))=LOWER(TRIM(?)) AND LOWER(TRIM(last_name))=LOWER(TRIM(?)) AND birthday_month=? AND birthday_day=? AND birthday_year=? LIMIT 1");
     $dup->bind_param('ssiii', $first_name, $last_name, $birthday_month, $birthday_day, $birthday_year);
     $dup->execute();
     $dupResult = $dup->get_result();
 }
-
 if ($dupResult && $dupResult->num_rows > 0) {
     $existing = $dupResult->fetch_assoc();
     if ($is_kiosk) kioskDuplicate('Duplicate beneficiary already exists in verifier.', $existing['beneficiary_code'] ?? '');
@@ -155,11 +116,7 @@ $insert = $conn->prepare("INSERT INTO beneficiaries (beneficiary_code, first_nam
 $insert->bind_param('ssssssiiiisssssssssii', $beneficiary_code, $first_name, $middle_name, $last_name, $ext_name, $contact_number, $birthday_month, $birthday_day, $birthday_year, $age, $sex, $lgu, $national_id, $household_id, $program_type, $region, $province, $city_municipality, $barangay, $sms_opt_in, $is_pregnant);
 
 if ($insert->execute()) {
-    $beneficiary_id = $conn->insert_id;
-    if ($is_kiosk) {
-        [$qnum, $qtype] = createQueue($conn, $beneficiary_id, $age, $sms_opt_in, $is_pregnant);
-        kioskDone($beneficiary_code, $qnum, $qtype, 0);
-    }
+    if ($is_kiosk) kioskRegistered($beneficiary_code);
     backTo('../staff/verifier.php');
 }
 
