@@ -37,15 +37,22 @@ $already_received_payout = trim($_POST['already_received_payout'] ?? 'No');
 $receiving_other_assistance = trim($_POST['receiving_other_assistance'] ?? 'No');
 $eligibility_status = trim($_POST['eligibility_status'] ?? 'Pending Review');
 $approved_cash_amount = ($_POST['approved_cash_amount'] ?? '') !== '' ? floatval($_POST['approved_cash_amount']) : 0;
-$remarks = trim($_POST['remarks'] ?? '');
 $verified_by = intval($_SESSION['user_id'] ?? 0);
+$charter = $_POST['charter'] ?? [];
+if (!is_array($charter)) $charter = [];
+$remarks = json_encode($charter, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
 if (!in_array($matches_masterlist, ['Yes', 'No'])) $matches_masterlist = 'No';
 if (!in_array($already_received_payout, ['Yes', 'No'])) $already_received_payout = 'No';
 if (!in_array($receiving_other_assistance, ['Yes', 'No'])) $receiving_other_assistance = 'No';
 if (!in_array($eligibility_status, ['Eligible', 'Not Eligible', 'Pending Review'])) $eligibility_status = 'Pending Review';
 
-if ($form_locked === 1 && ($eligibility_status !== 'Eligible' || $approved_cash_amount <= 0)) {
+$assistance_mode = trim($charter['assistance_mode'] ?? '');
+$canApproveWithoutCash = in_array($assistance_mode, ['Material Assistance','Guarantee Letter','Referral','Disapproval Letter'], true);
+if ($form_locked === 1 && $eligibility_status === 'Eligible' && $approved_cash_amount <= 0 && !$canApproveWithoutCash) {
+    goBack($queue_id);
+}
+if ($form_locked === 1 && $eligibility_status === 'Pending Review') {
     goBack($queue_id);
 }
 
